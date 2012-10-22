@@ -9,8 +9,12 @@
 
 class IPyraNet2DLayer {
 public:
+    
+    IPyraNet2DLayer();
     IPyraNet2DLayer(int width, int height);
     ~IPyraNet2DLayer();
+
+    void setLayerSize(int width, int height);
 
     void setReceptiveFieldSize(int r) { receptiveSize = r; }
     int getReceptiveFieldSize() const { return receptiveSize; }
@@ -39,9 +43,6 @@ private:
     std::vector<std::vector<double> > weights;
 
     void initWeights();
-
-    // not supposed to be used
-    IPyraNet2DLayer() {}
 };
 
 #endif // _IPyraNet2DLayer_h_

@@ -15,11 +15,13 @@ set(IPyraNet_SOURCE_FILES
     source/main.cxx
 	
 	source/IPyraNet.cxx
+	source/IPyraNet2DSourceLayer.cxx
 	source/IPyraNet2DLayer.cxx
 	)
 	
 set(IPyraNet_HEADER_FILES 
 	source/IPyraNet.h
+	source/IPyraNet2DSourceLayer.h
 	source/IPyraNet2DLayer.h
 	)	
 	
