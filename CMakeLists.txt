@@ -13,9 +13,17 @@ include_directories(${OPENNI_INCLUDE_DIR})
 
 set(IPyraNet_SOURCE_FILES 
     source/main.cxx
+	
+	source/IPyraNet.cxx
+	source/IPyraNet2DLayer.cxx
 	)
 	
-add_executable (IPyraNet ${IPyraNet_SOURCE_FILES})
+set(IPyraNet_HEADER_FILES 
+	source/IPyraNet.h
+	source/IPyraNet2DLayer.h
+	)	
+	
+add_executable (IPyraNet ${IPyraNet_SOURCE_FILES} ${IPyraNet_HEADER_FILES})
 
 #target_link_libraries(IPyraNet ${Boost_LIBRARIES})
 target_link_libraries(IPyraNet ${OpenCV_LIBS})
