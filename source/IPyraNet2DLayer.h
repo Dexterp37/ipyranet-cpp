@@ -12,7 +12,7 @@ public:
     
     IPyraNet2DLayer();
     IPyraNet2DLayer(int width, int height);
-    ~IPyraNet2DLayer();
+    virtual ~IPyraNet2DLayer();
 
     void setLayerSize(int width, int height);
 
