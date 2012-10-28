@@ -3,32 +3,40 @@
  */
 
 #include "IPyraNet.h"
-#include "IPyraNet2DLayer.h"
+#include "IPyraNetLayer.h"
 
-IPyraNet::IPyraNet() {
-    layers2D.clear();
+template <class NetType>
+IPyraNet<NetType>::IPyraNet() {
+    layers.clear();
 }
 
-IPyraNet::~IPyraNet() {
+template <class NetType>
+IPyraNet<NetType>::~IPyraNet() {
     destroy();
 }
 
-void IPyraNet::appendLayer(IPyraNet2DLayer* newLayer) {
+template <class NetType>
+void IPyraNet<NetType>::appendLayer(IPyraNetLayer<NetType>* newLayer) {
     
     if (newLayer == NULL)
         return;
 
-    layers2D.push_back(newLayer);
+    layers.push_back(newLayer);
 }
 
-void IPyraNet::destroy() {
+template <class NetType>
+void IPyraNet<NetType>::destroy() {
 
-    size_t num2D = layers2D.size();
+    size_t num = layers.size();
 
-    for (size_t k = 0; k < num2D; ++k) {
-        IPyraNet2DLayer* layer = layers2D[k];
+    for (size_t k = 0; k < num; ++k) {
+        IPyraNetLayer<NetType>* layer = layers[k];
         delete layer;
     }
 
-    layers2D.clear();
+    layers.clear();
 }
+
+// explicit instantiations
+template class IPyraNet<float>;
+template class IPyraNet<double>;

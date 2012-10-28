@@ -8,20 +8,20 @@
 #include <vector>
 
 // forward declarations
-class IPyraNet2DLayer;
+template<class OutType> class IPyraNetLayer;
 
+template <class NetType>
 class IPyraNet {
 public:
     IPyraNet();
     ~IPyraNet();
 
-    void appendLayer(IPyraNet2DLayer* newLayer);
+    void appendLayer(IPyraNetLayer<NetType>* newLayer);
 
     void destroy();
 
 private:
-    std::vector<IPyraNet2DLayer*> layers2D;
-    //std::vector<IPyraNet1DLayer*> layers1D;
+    std::vector<IPyraNetLayer<NetType>*> layers;
 };
 
 #endif // _IPyraNet_h_

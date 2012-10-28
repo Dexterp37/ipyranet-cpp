@@ -4,30 +4,47 @@
 
 #include "IPyraNet2DSourceLayer.h"
 #include <opencv2/highgui/highgui.hpp>
-#include <stdlib.h>
+#include <assert.h>
 
-IPyraNet2DSourceLayer::IPyraNet2DSourceLayer() 
-    : IPyraNet2DLayer()
+template<class OutType>
+IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer() 
+    : IPyraNetLayer<OutType>()
 {
 
 }
 
-IPyraNet2DSourceLayer::IPyraNet2DSourceLayer(const std::string& fileName) {
+template<class OutType>
+IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer(const std::string& fileName) {
     load(fileName);
 }
 
-IPyraNet2DSourceLayer::~IPyraNet2DSourceLayer() {
+template<class OutType>
+IPyraNet2DSourceLayer<OutType>::~IPyraNet2DSourceLayer() {
 
 }
 
-bool IPyraNet2DSourceLayer::load(const std::string& fileName) {
+template<class OutType>
+bool IPyraNet2DSourceLayer<OutType>::load(const std::string& fileName) {
 
     source = cv::imread(fileName);
 
     if (!source.data)
         return false;
 
-    setLayerSize(source.cols, source.rows);
-
     return true;
 }
+   
+template<class OutType>
+OutType IPyraNet2DSourceLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLocation) {
+    
+    // sanity checks
+    assert (dimensions == 2);
+    assert (neuronLocation != NULL);
+    assert (neuronLocation[0] > 0 && neuronLocation[1] > 0);
+    
+    return static_cast<OutType>(source.at<unsigned int>(neuronLocation[1], neuronLocation[0]));
+}
+
+// explicit instantiations
+template class IPyraNet2DSourceLayer<float>;
+template class IPyraNet2DSourceLayer<double>;

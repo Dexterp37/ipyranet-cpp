@@ -5,6 +5,7 @@
 #ifndef _IPyraNet2DLayer_h_
 #define _IPyraNet2DLayer_h_
 
+#include "IPyraNetLayer.h"
 #include <vector>
 
 class IPyraNet2DLayer {
