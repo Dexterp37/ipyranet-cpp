@@ -4,6 +4,7 @@
 
 #include "IPyraNet.h"
 #include "IPyraNetLayer.h"
+#include <assert.h>
 
 template <class NetType>
 IPyraNet<NetType>::IPyraNet() {
@@ -21,6 +22,13 @@ void IPyraNet<NetType>::appendLayer(IPyraNetLayer<NetType>* newLayer) {
     if (newLayer == NULL)
         return;
 
+    IPyraNetLayer<NetType>* lastLayer = NULL;
+
+    // link this new layer to the last layer
+    if (layers.size() > 0) 
+        lastLayer = *(layers.end());
+
+    newLayer->setParentLayer(lastLayer);
     layers.push_back(newLayer);
 }
 

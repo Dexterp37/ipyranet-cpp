@@ -12,8 +12,7 @@ IPyraNet2DLayer::IPyraNet2DLayer()
     height(0),
     receptiveSize(0),
     overlap(0),
-    inhibitorySize(0),
-    parentLayer(NULL)
+    inhibitorySize(0)
 {
 
 }
@@ -23,8 +22,7 @@ IPyraNet2DLayer::IPyraNet2DLayer(int width, int height)
     height(height),
     receptiveSize(0),
     overlap(0),
-    inhibitorySize(0),
-    parentLayer(NULL)
+    inhibitorySize(0)
 {
     initWeights();
 }

@@ -26,9 +26,6 @@ public:
     void setInhibitoryFieldSize(int i) { inhibitorySize = i; }
     int getInhibitoryFieldSize() const { return inhibitorySize; }
 
-    void setParentLayer(IPyraNet2DLayer* parent) { parentLayer = parent; }
-    IPyraNet2DLayer* getParentLayer() { return parentLayer; }
-
 private:
     int width;
     int height;
@@ -36,9 +33,6 @@ private:
     int receptiveSize;
     int overlap;
     int inhibitorySize;
-
-    // previous (adjacent bigger) layer in the pyramid
-    IPyraNet2DLayer* parentLayer;
 
     // a weight for each neuron
     std::vector<std::vector<double> > weights;
