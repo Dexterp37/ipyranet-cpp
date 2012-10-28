@@ -9,7 +9,7 @@
 #include <opencv2/core/core.hpp>
 #include <string>
 
-template<typename OutType>
+template<class OutType>
 class IPyraNet2DSourceLayer : public IPyraNetLayer<OutType> {
 public:
     IPyraNet2DSourceLayer();

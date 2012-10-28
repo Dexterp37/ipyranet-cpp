@@ -3,12 +3,14 @@
  */
 
 #include "IPyraNet2DLayer.h"
-#include <stdlib.h>
+#include <assert.h>
 
 #define UNIFORM_PLUS_MINUS_ONE ( (double)(2.0 * rand())/RAND_MAX - 1.0 )
 
-IPyraNet2DLayer::IPyraNet2DLayer() 
-    : width(0),
+template<class OutType>
+IPyraNet2DLayer<OutType>::IPyraNet2DLayer() 
+    : IPyraNetLayer<OutType>(),
+    width(0),
     height(0),
     receptiveSize(0),
     overlap(0),
@@ -17,8 +19,10 @@ IPyraNet2DLayer::IPyraNet2DLayer()
 
 }
 
-IPyraNet2DLayer::IPyraNet2DLayer(int width, int height) 
-    : width(width),
+template<class OutType>
+IPyraNet2DLayer<OutType>::IPyraNet2DLayer(int width, int height) 
+    : IPyraNetLayer<OutType>(),
+    width(width),
     height(height),
     receptiveSize(0),
     overlap(0),
@@ -27,11 +31,13 @@ IPyraNet2DLayer::IPyraNet2DLayer(int width, int height)
     initWeights();
 }
 
-IPyraNet2DLayer::~IPyraNet2DLayer() {
+template<class OutType>
+IPyraNet2DLayer<OutType>::~IPyraNet2DLayer() {
 
 }
 
-void IPyraNet2DLayer::setLayerSize(int width, int height) {
+template<class OutType>
+void IPyraNet2DLayer<OutType>::setLayerSize(int width, int height) {
     
     this->width = width;
     this->height = height;
@@ -39,7 +45,8 @@ void IPyraNet2DLayer::setLayerSize(int width, int height) {
     initWeights();
 }
 
-void IPyraNet2DLayer::initWeights() {
+template<class OutType>
+void IPyraNet2DLayer<OutType>::initWeights() {
 
     weights.resize(width);
 
@@ -52,3 +59,69 @@ void IPyraNet2DLayer::initWeights() {
         }
     }
 }
+
+template<class OutType>
+void IPyraNet2DLayer<OutType>::initBiases() {
+
+    biases.resize(width);
+
+    for (int u = 0; u < width; ++u) {
+
+        biases[u].resize(height);
+
+        for (int v = 0; v < height; ++v) {
+            biases[u][v] = UNIFORM_PLUS_MINUS_ONE;
+        }
+    }
+}
+
+template<class OutType>
+OutType IPyraNet2DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLocation) {
+    
+    // sanity checks
+    assert (dimensions == 2);
+    assert (neuronLocation != NULL);
+    assert (neuronLocation[0] > 0 && neuronLocation[1] > 0);
+    assert (getParentLayer() != NULL);
+
+    // parent layer pointer
+    IPyraNetLayer<OutType>* parent = getParentLayer();
+
+    // compute the gap
+    const int gap = receptiveSize - overlap;
+
+    // just for compliance with the article
+    const int u = neuronLocation[0];
+    const int v = neuronLocation[1];
+
+    OutType fieldAccumulator = 0;
+
+    int parentLoc[2];
+
+    // iterate through the neurons inside the receptive field of the previous layer
+    // TODO: optimize (bring the condition outside the loop)
+    for (int i = (u - 1) * gap + 1; i <= ((u - 1) * gap + receptiveSize); ++i) {
+
+        parentLoc[0] = i;
+        
+        for (int j = (v - 1) * gap + 1; j <= ((v - 1) * gap + receptiveSize); ++j) {
+            
+            parentLoc[1] = j;
+
+            OutType parentOutput = parent->getNeuronOutput(2, parentLoc);
+            OutType weight = weights[i][j]; // TODO: should we take the weight of the last level? I think yes!
+            OutType bias = biases[u][v];
+
+            fieldAccumulator += parentOutput * weight + bias;
+        }
+    }
+
+    // TODO: apply the sigmoid function to the fieldAccumulator
+    OutType result = fieldAccumulator;
+
+    return result;
+}
+
+// explicit instantiations
+template class IPyraNet2DLayer<float>;
+template class IPyraNet2DLayer<double>;

@@ -8,7 +8,8 @@
 #include "IPyraNetLayer.h"
 #include <vector>
 
-class IPyraNet2DLayer {
+template<class OutType>
+class IPyraNet2DLayer : public IPyraNetLayer<OutType> {
 public:
     
     IPyraNet2DLayer();
@@ -26,6 +27,8 @@ public:
     void setInhibitoryFieldSize(int i) { inhibitorySize = i; }
     int getInhibitoryFieldSize() const { return inhibitorySize; }
 
+    virtual OutType getNeuronOutput(int dimensions, int* neuronLocation);
+
 private:
     int width;
     int height;
@@ -35,9 +38,11 @@ private:
     int inhibitorySize;
 
     // a weight for each neuron
-    std::vector<std::vector<double> > weights;
+    std::vector<std::vector<OutType> > weights;
+    std::vector<std::vector<OutType> > biases;
 
     void initWeights();
+    void initBiases();
 };
 
 #endif // _IPyraNet2DLayer_h_
