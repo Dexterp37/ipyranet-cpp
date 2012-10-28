@@ -26,7 +26,7 @@ void IPyraNet<NetType>::appendLayer(IPyraNetLayer<NetType>* newLayer) {
 
     // link this new layer to the last layer
     if (layers.size() > 0) 
-        lastLayer = *(layers.end());
+        lastLayer = layers.back();
 
     newLayer->setParentLayer(lastLayer);
     layers.push_back(newLayer);
