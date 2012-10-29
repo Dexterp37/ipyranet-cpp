@@ -96,29 +96,35 @@ OutType IPyraNet2DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLoc
     const int u = neuronLocation[0];
     const int v = neuronLocation[1];
 
-    OutType fieldAccumulator = 0;
+    OutType receptiveAccumulator = 0;
+    OutType inhibitoryAccumulator = 0;
+    OutType bias = biases[u][v];
 
     int parentLoc[2];
 
     // iterate through the neurons inside the receptive field of the previous layer
-    // TODO: optimize (bring the condition outside the loop)
-    for (int i = (u - 1) * gap + 1; i <= ((u - 1) * gap + receptiveSize); ++i) {
+    const int max_u = (u - 1) * gap + receptiveSize;
+    const int max_v = (v - 1) * gap + receptiveSize;
+
+    for (int i = (u - 1) * gap + 1; i <= max_u; ++i) {
 
         parentLoc[0] = i;
         
-        for (int j = (v - 1) * gap + 1; j <= ((v - 1) * gap + receptiveSize); ++j) {
+        for (int j = (v - 1) * gap + 1; j <= max_v; ++j) {
             
             parentLoc[1] = j;
 
             OutType parentOutput = parent->getNeuronOutput(2, parentLoc);
             OutType weight = weights[i][j];
-            OutType bias = biases[u][v];
 
-            fieldAccumulator += parentOutput * weight + bias;
+            receptiveAccumulator += parentOutput * weight;
         }
     }
 
-    OutType result = getActivationFunction()->compute(fieldAccumulator);
+    // iterate through the neurons inside the inhibitory field
+    // TODO
+
+    OutType result = getActivationFunction()->compute(receptiveAccumulator - inhibitoryAccumulator + bias);
 
     return result;
 }
