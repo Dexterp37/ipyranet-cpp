@@ -11,8 +11,7 @@ public:
     IPyraNetActivationFunction() { };
     virtual ~IPyraNetActivationFunction() { };
 
-
-private:
+    virtual OutType compute(OutType val) = 0;
 };
 
 #endif // _IPyraNetActivationFunction_h_

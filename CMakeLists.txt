@@ -21,8 +21,11 @@ set(IPyraNet_SOURCE_FILES
 	
 set(IPyraNet_HEADER_FILES 
 	source/IPyraNet.h
+	source/IPyraNetLayer.h
 	source/IPyraNet2DSourceLayer.h
 	source/IPyraNet2DLayer.h
+	source/IPyraNetActivationFunction.h
+	source/IPyraNetSigmoidFunction.h
 	)	
 	
 add_executable (IPyraNet ${IPyraNet_SOURCE_FILES} ${IPyraNet_HEADER_FILES})

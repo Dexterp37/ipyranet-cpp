@@ -20,7 +20,7 @@ IPyraNet2DLayer<OutType>::IPyraNet2DLayer()
 }
 
 template<class OutType>
-IPyraNet2DLayer<OutType>::IPyraNet2DLayer(int receptive, int inhibitory, int overlap) 
+IPyraNet2DLayer<OutType>::IPyraNet2DLayer(int receptive, int inhibitory, int overlap, IPyraNetActivationFunction<OutType>* activationFunc) 
     : IPyraNetLayer<OutType>(),
     width(0),
     height(0),
@@ -28,7 +28,7 @@ IPyraNet2DLayer<OutType>::IPyraNet2DLayer(int receptive, int inhibitory, int ove
     overlap(overlap),
     inhibitorySize(inhibitory)
 {
-    //initWeights();
+    setActivationFunction(activationFunc);
 }
 
 template<class OutType>
@@ -84,6 +84,7 @@ OutType IPyraNet2DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLoc
     assert (neuronLocation != NULL);
     assert (neuronLocation[0] > 0 && neuronLocation[1] > 0);
     assert (getParentLayer() != NULL);
+    assert (getActivationFunction() != NULL);
 
     // parent layer pointer
     IPyraNetLayer<OutType>* parent = getParentLayer();
@@ -117,8 +118,7 @@ OutType IPyraNet2DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLoc
         }
     }
 
-    // TODO: apply the sigmoid function to the fieldAccumulator
-    OutType result = fieldAccumulator;
+    OutType result = getActivationFunction()->compute(fieldAccumulator);
 
     return result;
 }

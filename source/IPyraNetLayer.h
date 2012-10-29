@@ -26,6 +26,9 @@ public:
     virtual void setParentLayer(IPyraNetLayer<OutType>* parent) { parentLayer = parent; }
     IPyraNetLayer<OutType>* getParentLayer() { return parentLayer; }
 
+    void setActivationFunction(IPyraNetActivationFunction<OutType>* func) { activationFunction = func; }
+    IPyraNetActivationFunction<OutType>* getActivationFunction() { return activationFunction; }
+
 private:
     // previous (adjacent bigger) layer in the pyramid
     IPyraNetLayer<OutType>* parentLayer;

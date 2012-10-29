@@ -13,7 +13,7 @@ class IPyraNet2DLayer : public IPyraNetLayer<OutType> {
 public:
     
     IPyraNet2DLayer();
-    IPyraNet2DLayer(int receptive, int inhibitory, int overlap);
+    IPyraNet2DLayer(int receptive, int inhibitory, int overlap, IPyraNetActivationFunction<OutType>* activationFunc = NULL);
     virtual ~IPyraNet2DLayer();
 
     void setReceptiveFieldSize(int r) { receptiveSize = r; }
