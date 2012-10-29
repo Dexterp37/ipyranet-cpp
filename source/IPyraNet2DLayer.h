@@ -27,7 +27,9 @@ public:
     void setInhibitoryFieldSize(int i) { inhibitorySize = i; }
     int getInhibitoryFieldSize() const { return inhibitorySize; }
 
-    virtual OutType getNeuronOutput(int dimensions, int* neuronLocation);
+    OutType getNeuronOutput(int dimensions, int* neuronLocation);    
+    int getDimensions() const;
+    void getSize(int* size);
 
 private:
     int width;

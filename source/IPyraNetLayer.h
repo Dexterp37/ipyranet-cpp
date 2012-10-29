@@ -20,6 +20,8 @@ public:
     };
 
     virtual OutType getNeuronOutput(int dimensions, int* neuronLocation) = 0;
+    virtual int getDimensions() const = 0;
+    virtual void getSize(int* size) = 0;
 
     void setParentLayer(IPyraNetLayer<OutType>* parent) { parentLayer = parent; }
     IPyraNetLayer<OutType>* getParentLayer() { return parentLayer; }

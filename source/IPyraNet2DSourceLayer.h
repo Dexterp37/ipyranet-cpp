@@ -18,7 +18,9 @@ public:
 
     bool load(const std::string& fileName);
 
-    OutType getNeuronOutput(int dimensions, int* neuronLocation);
+    OutType getNeuronOutput(int dimensions, int* neuronLocation);    
+    int getDimensions() const;
+    void getSize(int* size);
 
 private:
     cv::Mat source;

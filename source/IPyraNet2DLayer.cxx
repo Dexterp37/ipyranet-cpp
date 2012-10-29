@@ -122,6 +122,19 @@ OutType IPyraNet2DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLoc
     return result;
 }
 
+template<class OutType>
+int IPyraNet2DLayer<OutType>::getDimensions() const {
+    return 2;
+}
+
+template<class OutType>
+void IPyraNet2DLayer<OutType>::getSize(int* size) {
+    assert(size != NULL);
+
+    size[0] = width;
+    size[1] = height;
+}
+
 // explicit instantiations
 template class IPyraNet2DLayer<float>;
 template class IPyraNet2DLayer<double>;

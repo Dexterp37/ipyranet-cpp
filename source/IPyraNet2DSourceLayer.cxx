@@ -45,6 +45,19 @@ OutType IPyraNet2DSourceLayer<OutType>::getNeuronOutput(int dimensions, int* neu
     return static_cast<OutType>(source.at<unsigned int>(neuronLocation[1], neuronLocation[0]));
 }
 
+template<class OutType>
+int IPyraNet2DSourceLayer<OutType>::getDimensions() const {
+    return 2;
+}
+
+template<class OutType>
+void IPyraNet2DSourceLayer<OutType>::getSize(int* size) {
+    assert(size != NULL);
+
+    size[0] = source.cols;
+    size[1] = source.rows;
+}
+
 // explicit instantiations
 template class IPyraNet2DSourceLayer<float>;
 template class IPyraNet2DSourceLayer<double>;
