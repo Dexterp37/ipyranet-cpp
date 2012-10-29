@@ -16,6 +16,7 @@ set(IPyraNet_SOURCE_FILES
 	
 	source/IPyraNet.cxx
 	source/IPyraNet2DSourceLayer.cxx
+	source/IPyraNet1DLayer.cxx
 	source/IPyraNet2DLayer.cxx
 	)
 	
