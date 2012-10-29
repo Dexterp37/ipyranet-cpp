@@ -20,15 +20,15 @@ IPyraNet2DLayer<OutType>::IPyraNet2DLayer()
 }
 
 template<class OutType>
-IPyraNet2DLayer<OutType>::IPyraNet2DLayer(int width, int height) 
+IPyraNet2DLayer<OutType>::IPyraNet2DLayer(int receptive, int inhibitory, int overlap) 
     : IPyraNetLayer<OutType>(),
-    width(width),
-    height(height),
-    receptiveSize(0),
-    overlap(0),
-    inhibitorySize(0)
+    width(0),
+    height(0),
+    receptiveSize(receptive),
+    overlap(overlap),
+    inhibitorySize(inhibitory)
 {
-    initWeights();
+    //initWeights();
 }
 
 template<class OutType>
@@ -37,24 +37,25 @@ IPyraNet2DLayer<OutType>::~IPyraNet2DLayer() {
 }
 
 template<class OutType>
-void IPyraNet2DLayer<OutType>::setLayerSize(int width, int height) {
-    
-    this->width = width;
-    this->height = height;
-
-    initWeights();
-}
-
-template<class OutType>
 void IPyraNet2DLayer<OutType>::initWeights() {
 
-    weights.resize(width);
+    assert(getParentLayer() != NULL);
 
-    for (int u = 0; u < width; ++u) {
+    IPyraNetLayer<OutType>* parent = getParentLayer();
+    
+    // get parent size
+    int parentSize[2];
+    parent->getSize(parentSize);
 
-        weights[u].resize(height);
+    // we need to have as many weights as the number of neurons in last
+    // layer.
+    weights.resize(parentSize[0]);
 
-        for (int v = 0; v < height; ++v) {
+    for (int u = 0; u < parentSize[0]; ++u) {
+
+        weights[u].resize(parentSize[1]);
+
+        for (int v = 0; v < parentSize[1]; ++v) {
             weights[u][v] = UNIFORM_PLUS_MINUS_ONE;
         }
     }
@@ -109,7 +110,7 @@ OutType IPyraNet2DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLoc
             parentLoc[1] = j;
 
             OutType parentOutput = parent->getNeuronOutput(2, parentLoc);
-            OutType weight = weights[i][j]; // TODO: should we take the weight of the last level? I think yes!
+            OutType weight = weights[i][j];
             OutType bias = biases[u][v];
 
             fieldAccumulator += parentOutput * weight + bias;
@@ -133,6 +134,36 @@ void IPyraNet2DLayer<OutType>::getSize(int* size) {
 
     size[0] = width;
     size[1] = height;
+}
+
+template<class OutType>
+void IPyraNet2DLayer<OutType>::setParentLayer(IPyraNetLayer<OutType>* parent) { 
+    
+    assert(parent != NULL);
+    assert(receptiveSize != 0);
+    assert(overlap != 0);
+
+    // calls base class
+    IPyraNetLayer<OutType>::setParentLayer(parent);
+
+    const int dims = parent->getDimensions();
+
+    // we can just connect 2d layers to 2d layers
+    assert(dims == 2);
+
+    // get parent size
+    int parentSize[2];
+    parent->getSize(parentSize);
+
+    // compute the gap
+    const float gap = static_cast<float>(receptiveSize - overlap);
+
+    width = static_cast<int>(floor(static_cast<float>(parentSize[0] - overlap) / gap));
+    height = static_cast<int>(floor(static_cast<float>(parentSize[1] - overlap) / gap));
+
+    // init weights and biases
+    initWeights();
+    initBiases();
 }
 
 // explicit instantiations

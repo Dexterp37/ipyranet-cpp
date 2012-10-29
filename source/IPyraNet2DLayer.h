@@ -13,10 +13,8 @@ class IPyraNet2DLayer : public IPyraNetLayer<OutType> {
 public:
     
     IPyraNet2DLayer();
-    IPyraNet2DLayer(int width, int height);
+    IPyraNet2DLayer(int receptive, int inhibitory, int overlap);
     virtual ~IPyraNet2DLayer();
-
-    void setLayerSize(int width, int height);
 
     void setReceptiveFieldSize(int r) { receptiveSize = r; }
     int getReceptiveFieldSize() const { return receptiveSize; }
@@ -30,6 +28,8 @@ public:
     OutType getNeuronOutput(int dimensions, int* neuronLocation);    
     int getDimensions() const;
     void getSize(int* size);
+
+    void setParentLayer(IPyraNetLayer<OutType>* parent);
 
 private:
     int width;
