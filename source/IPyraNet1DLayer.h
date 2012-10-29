@@ -13,7 +13,7 @@ class IPyraNet1DLayer : public IPyraNetLayer<OutType> {
 public:
     
     IPyraNet1DLayer();
-    IPyraNet1DLayer(int receptive, int inhibitory, int overlap, IPyraNetActivationFunction<OutType>* activationFunc = NULL);
+    IPyraNet1DLayer(IPyraNetActivationFunction<OutType>* activationFunc);
     virtual ~IPyraNet1DLayer();
 
     OutType getNeuronOutput(int dimensions, int* neuronLocation);    
@@ -24,6 +24,16 @@ public:
 
 private:
     int neurons;    // number of neurons (size of the layer in 1D)
+
+    // in 1D layers weights are per-connection, not per neuron.
+    // so we have a inputs * neurons weights
+    std::vector<std::vector<OutType> > weights;
+
+    // one bias per neuron/output
+    std::vector<OutType> biases;
+
+    void initWeights();
+    void initBiases();
 };
 
 #endif // _IPyraNet1DLayer_h_

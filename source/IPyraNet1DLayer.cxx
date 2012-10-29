@@ -16,7 +16,7 @@ IPyraNet1DLayer<OutType>::IPyraNet1DLayer()
 }
 
 template<class OutType>
-IPyraNet1DLayer<OutType>::IPyraNet1DLayer(int receptive, int inhibitory, int overlap, IPyraNetActivationFunction<OutType>* activationFunc) 
+IPyraNet1DLayer<OutType>::IPyraNet1DLayer(IPyraNetActivationFunction<OutType>* activationFunc) 
     : IPyraNetLayer<OutType>(),
     neurons(0)
 {
@@ -60,26 +60,71 @@ void IPyraNet1DLayer<OutType>::setParentLayer(IPyraNetLayer<OutType>* parent) {
     
     // calls base class
     IPyraNetLayer<OutType>::setParentLayer(parent);
-    /*
-    const int dims = parent->getDimensions();
-
-    // we can just connect 2d layers to 2d layers
-    assert(dims == 2);
-
+    
+    const int parentDims = parent->getDimensions();
+    
     // get parent size
     int parentSize[2];
     parent->getSize(parentSize);
 
-    // compute the gap
-    const float gap = static_cast<float>(receptiveSize - overlap);
+    // we can connect to 2d layers and 1d layers
+    if (parentDims == 2) {
+        neurons = parentSize[0] * parentSize[1];
+    } else
+        neurons = parentSize[0];
 
-    width = static_cast<int>(floor(static_cast<float>(parentSize[0] - overlap) / gap));
-    height = static_cast<int>(floor(static_cast<float>(parentSize[1] - overlap) / gap));
+    // TODO: is this the same amount of neurons of last layer!?
 
     // init weights and biases
     initWeights();
-    initBiases();*/
+    initBiases();
 }
+
+template<class OutType>
+void IPyraNet1DLayer<OutType>::initWeights() {
+
+    assert(getParentLayer() != NULL);
+
+    IPyraNetLayer<OutType>* parent = getParentLayer();
+
+    const int parentDims = parent->getDimensions();
+    
+    // get parent size
+    int parentSize[2];
+    parent->getSize(parentSize);
+
+    // we can connect to both 1D and 2D layers so handle both
+    // cases
+    int inputNeurons = 0; 
+    if (parentDims == 2) {
+        inputNeurons = parentSize[0] * parentSize[1];
+    } else
+        inputNeurons = parentSize[0];
+
+    // we need to have a weight for each connection going from
+    // each input to every neuron in this layer.
+    weights.resize(inputNeurons);
+
+    for (int u = 0; u < inputNeurons; ++u) {
+
+        weights[u].resize(neurons);
+
+        for (int v = 0; v < neurons; ++v) {
+            weights[u][v] = UNIFORM_PLUS_MINUS_ONE;
+        }
+    }
+}
+
+template<class OutType>
+void IPyraNet1DLayer<OutType>::initBiases() {
+    
+    biases.resize(neurons);
+
+    for (int u = 0; u < neurons; ++u) {
+        biases[u] = UNIFORM_PLUS_MINUS_ONE;
+    }
+}
+
 
 // explicit instantiations
 template class IPyraNet1DLayer<float>;
