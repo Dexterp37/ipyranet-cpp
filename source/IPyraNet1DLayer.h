@@ -13,7 +13,7 @@ class IPyraNet1DLayer : public IPyraNetLayer<OutType> {
 public:
     
     IPyraNet1DLayer();
-    IPyraNet1DLayer(IPyraNetActivationFunction<OutType>* activationFunc);
+    IPyraNet1DLayer(int numberNeurons, IPyraNetActivationFunction<OutType>* activationFunc = NULL);
     virtual ~IPyraNet1DLayer();
 
     OutType getNeuronOutput(int dimensions, int* neuronLocation);    

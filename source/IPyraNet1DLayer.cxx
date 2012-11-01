@@ -16,9 +16,9 @@ IPyraNet1DLayer<OutType>::IPyraNet1DLayer()
 }
 
 template<class OutType>
-IPyraNet1DLayer<OutType>::IPyraNet1DLayer(IPyraNetActivationFunction<OutType>* activationFunc) 
+IPyraNet1DLayer<OutType>::IPyraNet1DLayer(int numberNeurons, IPyraNetActivationFunction<OutType>* activationFunc) 
     : IPyraNetLayer<OutType>(),
-    neurons(0)
+    neurons(numberNeurons)
 {
     setActivationFunction(activationFunc);
 }
@@ -38,7 +38,64 @@ OutType IPyraNet1DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLoc
     assert (getParentLayer() != NULL);
     assert (getActivationFunction() != NULL);
 
-    return 0;
+    // parent layer pointer
+    IPyraNetLayer<OutType>* parent = getParentLayer();
+
+    const int parentDims = parent->getDimensions();
+    
+    // get parent size
+    int parentSize[2];
+    parent->getSize(parentSize);
+    
+    int n = neuronLocation[0];
+    OutType accumulator = 0;
+
+    // we can connect to both 1D and 2D layers so handle both
+    // cases
+    int inputNeurons = 0; 
+    if (parentDims == 2) {
+        // This 1-D layer is connected to a 2-D layer.
+
+        // weighted sum of each parent neuron connecting to this level's 
+        // output neuron
+        inputNeurons = parentSize[0] * parentSize[1];
+        int parentNeuronLoc[2]; 
+        int parentNeuronIndex = 0;
+
+        for (int m_u = 0; m_u < parentSize[0]; ++m_u) {
+
+            parentNeuronLoc[0] = m_u;
+            
+            for (int m_v = 0; m_v < parentSize[1]; ++m_v) {
+                parentNeuronLoc[1] = m_v;
+                OutType parentNeuronOutput = parent->getNeuronOutput(2, parentNeuronLoc);
+
+                parentNeuronIndex = (m_v * parentSize[1]) + m_u;
+                OutType connectionWeight = weights[parentNeuronIndex][n];
+
+                accumulator += parentNeuronOutput * connectionWeight;
+            }
+        }
+    } else {
+        // This 1-D layer is connected to a 1-D layer.
+        inputNeurons = parentSize[0];
+
+        for (int m = 0; m < inputNeurons; ++m) {
+            OutType parentNeuronOutput = parent->getNeuronOutput(2, &m);
+
+            OutType connectionWeight = weights[m][n];
+
+            accumulator += parentNeuronOutput * connectionWeight;
+        }
+    }
+
+    // apply the bias
+    accumulator += biases[n];
+
+    // apply the activation function
+    OutType result = getActivationFunction()->compute(accumulator);
+
+    return result;
 }
 
 template<class OutType>
@@ -61,20 +118,6 @@ void IPyraNet1DLayer<OutType>::setParentLayer(IPyraNetLayer<OutType>* parent) {
     // calls base class
     IPyraNetLayer<OutType>::setParentLayer(parent);
     
-    const int parentDims = parent->getDimensions();
-    
-    // get parent size
-    int parentSize[2];
-    parent->getSize(parentSize);
-
-    // we can connect to 2d layers and 1d layers
-    if (parentDims == 2) {
-        neurons = parentSize[0] * parentSize[1];
-    } else
-        neurons = parentSize[0];
-
-    // TODO: is this the same amount of neurons of last layer!?
-
     // init weights and biases
     initWeights();
     initBiases();
