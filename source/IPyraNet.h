@@ -17,6 +17,7 @@ public:
     ~IPyraNet();
 
     void appendLayer(IPyraNetLayer<NetType>* newLayer);
+    void getOutput(std::vector<NetType>& outputs);
 
     void destroy();
 

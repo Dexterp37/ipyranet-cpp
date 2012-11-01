@@ -82,7 +82,7 @@ OutType IPyraNet2DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLoc
     // sanity checks
     assert (dimensions == 2);
     assert (neuronLocation != NULL);
-    assert (neuronLocation[0] > 0 && neuronLocation[1] > 0);
+    assert (neuronLocation[0] >= 0 && neuronLocation[1] >= 0);
     assert (getParentLayer() != NULL);
     assert (getActivationFunction() != NULL);
 
@@ -103,14 +103,16 @@ OutType IPyraNet2DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLoc
     int parentLoc[2];
 
     // iterate through the neurons inside the receptive field of the previous layer
-    const int max_u = (u - 1) * gap + receptiveSize;
-    const int max_v = (v - 1) * gap + receptiveSize;
+    const int max_u = u * gap + receptiveSize;
+    const int max_v = v * gap + receptiveSize;
 
-    for (int i = (u - 1) * gap + 1; i <= max_u; ++i) {
+//    for (int i = (u - 1) * gap + 1; i <= max_u; ++i) {
+    for (int i = u * gap + 1; i < max_u; ++i) {
 
         parentLoc[0] = i;
         
-        for (int j = (v - 1) * gap + 1; j <= max_v; ++j) {
+        //for (int j = (v - 1) * gap + 1; j <= max_v; ++j) {
+        for (int j = v * gap + 1; j < max_v; ++j) {
             
             parentLoc[1] = j;
 

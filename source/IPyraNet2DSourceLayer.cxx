@@ -40,9 +40,9 @@ OutType IPyraNet2DSourceLayer<OutType>::getNeuronOutput(int dimensions, int* neu
     // sanity checks
     assert (dimensions == 2);
     assert (neuronLocation != NULL);
-    assert (neuronLocation[0] > 0 && neuronLocation[1] > 0);
-    
-    return static_cast<OutType>(source.at<unsigned int>(neuronLocation[1], neuronLocation[0]));
+    assert (neuronLocation[0] >= 0 && neuronLocation[1] >= 0);
+
+    return static_cast<OutType>(source.at<unsigned char>(neuronLocation[1], neuronLocation[0]));
 }
 
 template<class OutType>

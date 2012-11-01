@@ -34,7 +34,7 @@ OutType IPyraNet1DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLoc
     // sanity checks
     assert (dimensions == 1);
     assert (neuronLocation != NULL);
-    assert (neuronLocation[0] > 0);
+    assert (neuronLocation[0] >= 0);
     assert (getParentLayer() != NULL);
     assert (getActivationFunction() != NULL);
 

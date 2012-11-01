@@ -30,6 +30,26 @@ void IPyraNet<NetType>::appendLayer(IPyraNetLayer<NetType>* newLayer) {
 
     layers.push_back(newLayer);
 }
+    
+template <class NetType>
+void IPyraNet<NetType>::getOutput(std::vector<NetType>& outputs) {
+    
+    if (layers.size() < 1)
+        return;
+
+    // last layer must be an 1-D layer
+    IPyraNetLayer<NetType>* lastLayer = layers.back();
+    if (lastLayer->getDimensions() != 1)
+        return;
+    
+    int size = 0;
+    lastLayer->getSize(&size);
+
+    for (int n = 0; n < size; ++n) {
+        NetType out = lastLayer->getNeuronOutput(1, &n);
+        outputs.push_back(out);
+    }
+}
 
 template <class NetType>
 void IPyraNet<NetType>::destroy() {
