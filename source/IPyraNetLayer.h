@@ -34,7 +34,7 @@ public:
     virtual int getDimensions() const = 0;
     virtual void getSize(int* size) = 0;
 
-    virtual void setParentLayer(IPyraNetLayer<OutType>* parent) { parentLayer = parent; }
+    virtual void setParentLayer(IPyraNetLayer<OutType>* parent, bool init = true) { parentLayer = parent; }
     IPyraNetLayer<OutType>* getParentLayer() { return parentLayer; }
 
     void setActivationFunction(IPyraNetActivationFunction<OutType>* func) { activationFunction = func; }
@@ -42,6 +42,7 @@ public:
 
     // serialization helper
     virtual void saveToXML(pugi::xml_node& node) = 0;
+    virtual void loadFromXML(pugi::xml_node& node) = 0;
 
 private:
     // previous (adjacent bigger) layer in the pyramid

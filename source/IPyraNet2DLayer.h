@@ -31,9 +31,10 @@ public:
     int getDimensions() const;
     void getSize(int* size);
 
-    void setParentLayer(IPyraNetLayer<OutType>* parent);
+    void setParentLayer(IPyraNetLayer<OutType>* parent, bool init);
 
     void saveToXML(pugi::xml_node& node);
+    void loadFromXML(pugi::xml_node& node);
 
 private:
     int width;

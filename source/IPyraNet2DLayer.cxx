@@ -184,6 +184,57 @@ OutType IPyraNet2DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLoc
 }
 
 template<class OutType>
+int IPyraNet2DLayer<OutType>::getDimensions() const {
+    return 2;
+}
+
+template<class OutType>
+void IPyraNet2DLayer<OutType>::getSize(int* size) {
+    assert(size != NULL);
+
+    size[0] = width;
+    size[1] = height;
+}
+
+template<class OutType>
+void IPyraNet2DLayer<OutType>::setParentLayer(IPyraNetLayer<OutType>* parent, bool init) { 
+    
+    assert(parent != NULL);
+    assert(receptiveSize != 0);
+    assert(overlap != 0);
+
+    // calls base class
+    IPyraNetLayer<OutType>::setParentLayer(parent);
+
+    const int dims = parent->getDimensions();
+
+    // we can just connect 2d layers to 2d layers
+    assert(dims == 2);
+
+    // get parent size
+    int parentSize[2];
+    parent->getSize(parentSize);
+
+    // compute the gap
+    const float gap = static_cast<float>(receptiveSize - overlap);
+
+    int newWidth = static_cast<int>(floor(static_cast<float>(parentSize[0] - overlap) / gap));
+    int newHeight = static_cast<int>(floor(static_cast<float>(parentSize[1] - overlap) / gap));
+
+    // init weights and biases
+    if (init) {
+        width = newWidth;
+        height = newHeight;
+
+        initWeights();
+        initBiases();
+    } /*else {
+        assert (width == newWidth);
+        assert (height == newHeight);
+    }*/
+}
+
+template<class OutType>
 void IPyraNet2DLayer<OutType>::saveToXML(pugi::xml_node& node) {
 
     // save the size
@@ -205,8 +256,11 @@ void IPyraNet2DLayer<OutType>::saveToXML(pugi::xml_node& node) {
 
     // dump the weights
     pugi::xml_node weightsNode = node.append_child("weights");
-    for (int u = 0; u < weights.size(); ++u) {
-        for (int v = 0; v < weights[u].size(); ++v) {
+    weightsNode.append_attribute("dim1").set_value(weights.size());
+    weightsNode.append_attribute("dim2").set_value(weights[0].size());
+
+    for (unsigned int u = 0; u < weights.size(); ++u) {
+        for (unsigned int v = 0; v < weights[u].size(); ++v) {
             pugi::xml_node weightNode = weightsNode.append_child("weight");
             
             // weight indices as attributes
@@ -223,9 +277,11 @@ void IPyraNet2DLayer<OutType>::saveToXML(pugi::xml_node& node) {
 
     // dump the biases
     pugi::xml_node biasesNode = node.append_child("biases");
+    biasesNode.append_attribute("dim1").set_value(biases.size());
+    biasesNode.append_attribute("dim2").set_value(biases[0].size());
     for (int u = 0; u < width; ++u) {
         for (int v = 0; v < height; ++v) {
-            pugi::xml_node biasNode = biasesNode.append_child("weight");
+            pugi::xml_node biasNode = biasesNode.append_child("bias");
             
             // weight indices as attributes
             pugi::xml_attribute index1Attr = biasNode.append_attribute("index1");
@@ -241,46 +297,49 @@ void IPyraNet2DLayer<OutType>::saveToXML(pugi::xml_node& node) {
 }
 
 template<class OutType>
-int IPyraNet2DLayer<OutType>::getDimensions() const {
-    return 2;
-}
+void IPyraNet2DLayer<OutType>::loadFromXML(pugi::xml_node& node) {
 
-template<class OutType>
-void IPyraNet2DLayer<OutType>::getSize(int* size) {
-    assert(size != NULL);
+    // load the size
+    width = node.attribute("width").as_int();
+    height = node.attribute("height").as_int();
 
-    size[0] = width;
-    size[1] = height;
-}
+    // receptive, inhibitory and overlaps
+    receptiveSize = node.attribute("receptive").as_int();
+    overlap = node.attribute("overlap").as_int();
+    inhibitorySize = node.attribute("inhibitory").as_int();
 
-template<class OutType>
-void IPyraNet2DLayer<OutType>::setParentLayer(IPyraNetLayer<OutType>* parent) { 
-    
-    assert(parent != NULL);
-    assert(receptiveSize != 0);
-    assert(overlap != 0);
+    // reshape weights buffer and load weights
+    size_t dim1 = node.child("weights").attribute("dim1").as_uint();
+    size_t dim2 = node.child("weights").attribute("dim2").as_uint();
 
-    // calls base class
-    IPyraNetLayer<OutType>::setParentLayer(parent);
+    weights.resize(dim1);
+    for (size_t k = 0; k < dim1; ++k) 
+        weights[k].resize(dim2);
 
-    const int dims = parent->getDimensions();
+    // actual load from XML
+    for (pugi::xml_node weight = node.child("weights").child("weight"); weight; weight = weight.next_sibling("weight")) {
 
-    // we can just connect 2d layers to 2d layers
-    assert(dims == 2);
+        size_t weightIndex1 = weight.attribute("index1").as_uint();
+        size_t weightIndex2 = weight.attribute("index2").as_uint();
 
-    // get parent size
-    int parentSize[2];
-    parent->getSize(parentSize);
+        weights[weightIndex1][weightIndex2] = static_cast<OutType>(weight.attribute("value").as_double());
+    }  
 
-    // compute the gap
-    const float gap = static_cast<float>(receptiveSize - overlap);
+    // load biases
+    dim1 = node.child("biases").attribute("dim1").as_uint();
+    dim2 = node.child("biases").attribute("dim2").as_uint();
 
-    width = static_cast<int>(floor(static_cast<float>(parentSize[0] - overlap) / gap));
-    height = static_cast<int>(floor(static_cast<float>(parentSize[1] - overlap) / gap));
+    biases.resize(dim1);
+    for (size_t k = 0; k < dim1; ++k) 
+        biases[k].resize(dim2);
 
-    // init weights and biases
-    initWeights();
-    initBiases();
+    for (pugi::xml_node bias = node.child("biases").child("bias"); bias; bias = bias.next_sibling("bias")) {
+
+        size_t biasIndex1 = bias.attribute("index1").as_uint();
+        size_t biasIndex2 = bias.attribute("index2").as_uint();
+
+        biases[biasIndex1][biasIndex2] = static_cast<OutType>(bias.attribute("value").as_double());
+    }  
 }
 
 // explicit instantiations

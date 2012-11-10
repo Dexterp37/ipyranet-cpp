@@ -21,12 +21,13 @@ public:
     int getDimensions() const;
     void getSize(int* size);
 
-    void setParentLayer(IPyraNetLayer<OutType>* parent);
+    void setParentLayer(IPyraNetLayer<OutType>* parent, bool init);
 
     void saveToXML(pugi::xml_node& node);
+    void loadFromXML(pugi::xml_node& node);
 
 private:
-    int neurons;    // number of neurons (size of the layer in 1D)
+    unsigned int neurons;    // number of neurons (size of the layer in 1D)
 
     // in 1D layers weights are per-connection, not per neuron.
     // so we have a inputs * neurons weights

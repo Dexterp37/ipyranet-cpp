@@ -42,6 +42,8 @@ private:
     TrainingTechnique trainingTechnique;
 
     std::vector<IPyraNetLayer<NetType>*> layers;
+
+    void appendLayerNoInit(IPyraNetLayer<NetType>* newLayer);
 };
 
 #endif // _IPyraNet_h_

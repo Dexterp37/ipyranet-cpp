@@ -70,6 +70,11 @@ void IPyraNet2DSourceLayer<OutType>::saveToXML(pugi::xml_node& node) {
     heightAttr.set_value(source.rows);
 }
 
+template<class OutType>
+void IPyraNet2DSourceLayer<OutType>::loadFromXML(pugi::xml_node& node) {
+
+}
+
 // explicit instantiations
 template class IPyraNet2DSourceLayer<float>;
 template class IPyraNet2DSourceLayer<double>;

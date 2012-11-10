@@ -111,7 +111,7 @@ void IPyraNet1DLayer<OutType>::getSize(int* size) {
 }
 
 template<class OutType>
-void IPyraNet1DLayer<OutType>::setParentLayer(IPyraNetLayer<OutType>* parent) { 
+void IPyraNet1DLayer<OutType>::setParentLayer(IPyraNetLayer<OutType>* parent, bool init) { 
     
     assert(parent != NULL);
     
@@ -119,8 +119,10 @@ void IPyraNet1DLayer<OutType>::setParentLayer(IPyraNetLayer<OutType>* parent) {
     IPyraNetLayer<OutType>::setParentLayer(parent);
     
     // init weights and biases
-    initWeights();
-    initBiases();
+    if (init) {
+        initWeights();
+        initBiases();
+    }
 }
 
 template<class OutType>
@@ -152,7 +154,7 @@ void IPyraNet1DLayer<OutType>::initWeights() {
 
         weights[u].resize(neurons);
 
-        for (int v = 0; v < neurons; ++v) {
+        for (unsigned int v = 0; v < neurons; ++v) {
             weights[u][v] = UNIFORM_PLUS_MINUS_ONE;
         }
     }
@@ -163,7 +165,7 @@ void IPyraNet1DLayer<OutType>::initBiases() {
     
     biases.resize(neurons);
 
-    for (int u = 0; u < neurons; ++u) {
+    for (unsigned int u = 0; u < neurons; ++u) {
         biases[u] = UNIFORM_PLUS_MINUS_ONE;
     }
 }
@@ -176,10 +178,12 @@ void IPyraNet1DLayer<OutType>::saveToXML(pugi::xml_node& node) {
     attr.set_value(neurons);
 
     // dump the weights
-    pugi::xml_node weightsNode = node.append_child("weights");
     size_t inputNeurons = weights.size();
-    for (int u = 0; u < inputNeurons; ++u) {
-        for (int v = 0; v < neurons; ++v) {
+    pugi::xml_node weightsNode = node.append_child("weights");
+    weightsNode.append_attribute("inputs").set_value(inputNeurons);
+
+    for (unsigned int u = 0; u < inputNeurons; ++u) {
+        for (unsigned int v = 0; v < neurons; ++v) {
             pugi::xml_node weightNode = weightsNode.append_child("weight");
             
             // weight indices as attributes
@@ -196,7 +200,7 @@ void IPyraNet1DLayer<OutType>::saveToXML(pugi::xml_node& node) {
 
     // dump the biases
     pugi::xml_node biasesNode = node.append_child("biases");
-    for (int biasIndex = 0; biasIndex < neurons; ++biasIndex) {
+    for (unsigned int biasIndex = 0; biasIndex < neurons; ++biasIndex) {
         pugi::xml_node biasNode = biasesNode.append_child("bias");
             
         // weight indices as attributes
@@ -206,6 +210,35 @@ void IPyraNet1DLayer<OutType>::saveToXML(pugi::xml_node& node) {
         pugi::xml_attribute biasAttr = biasNode.append_attribute("value");
         biasAttr.set_value(biases[biasIndex]);
     }
+}
+
+template<class OutType>
+void IPyraNet1DLayer<OutType>::loadFromXML(pugi::xml_node& node) {
+
+    neurons = node.attribute("neurons").as_int();
+
+    // reshape weights buffer and load weights
+    size_t inputNeurons = node.child("weights").attribute("inputs").as_uint();
+    weights.resize(inputNeurons);
+    for (size_t k = 0; k < inputNeurons; ++k) 
+        weights[k].resize(neurons);
+
+    // actual load from XML
+    for (pugi::xml_node weight = node.child("weights").child("weight"); weight; weight = weight.next_sibling("weight")) {
+
+        size_t weightIndex1 = weight.attribute("index1").as_uint();
+        size_t weightIndex2 = weight.attribute("index2").as_uint();
+
+        weights[weightIndex1][weightIndex2] = static_cast<OutType>(weight.attribute("value").as_double());
+    }  
+
+    // load biases
+    biases.resize(neurons);
+    for (pugi::xml_node bias = node.child("biases").child("bias"); bias; bias = bias.next_sibling("bias")) {
+
+        size_t biasIndex = bias.attribute("index").as_uint();
+        biases[biasIndex] = static_cast<OutType>(bias.attribute("value").as_double());
+    }  
 }
 
 // explicit instantiations

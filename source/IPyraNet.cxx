@@ -4,7 +4,9 @@
 
 #include "IPyraNet.h"
 #include "IPyraNetLayer.h"
+#include "IPyraNet2DSourceLayer.h"
 #include "IPyraNet1DLayer.h"
+#include "IPyraNet2DLayer.h"
 #include <assert.h>
 
 template <class NetType>
@@ -19,7 +21,6 @@ template <class NetType>
 IPyraNet<NetType>::~IPyraNet() {
     destroy();
 }
-
 
 template <class NetType>
 bool IPyraNet<NetType>::saveToXML(const std::string& fileName) {
@@ -36,36 +37,6 @@ bool IPyraNet<NetType>::saveToXML(const std::string& fileName) {
         attr.set_value(layer->getLayerType());
 
         layer->saveToXML(node);
-        /*
-        // save layer specific information. TODO: This code is not OO
-        // But hey. I don't have enough time atm.
-        switch (layer->getLayerType()) {
-        case IPyraNetLayer<NetType>::Layer1D: {
-                
-                IPyraNet1DLayer<NetType>* layer1D = static_cast<IPyraNet1DLayer<NetType>* >(layer);
-                
-                // size/number of neurons
-                int size1D;
-                layer1D->getSize(&size1D);
-                attr = node.append_attribute("neurons");
-                attr.set_value(size1D);
-
-                // dump weights
-            } break;
-
-        case IPyraNetLayer<NetType>::Layer2D: {
-
-            } break;
-
-        case IPyraNetLayer<NetType>::Source: {
-
-            } break;
-
-        case IPyraNetLayer<NetType>::Unknown:
-            // falls  through
-        default:
-            continue;
-        }*/
     }
 
     layers.clear();
@@ -75,7 +46,38 @@ bool IPyraNet<NetType>::saveToXML(const std::string& fileName) {
     
 template <class NetType>
 bool IPyraNet<NetType>::loadFromXML(const std::string& fileName) {
-    return false;
+
+    // erase all data, if any
+    destroy();
+
+    // load the XML file
+    pugi::xml_document doc;
+    pugi::xml_parse_result result = doc.load_file(fileName.c_str());
+
+    // traverse layers
+    for (pugi::xml_node layer = doc.child("layer"); layer; layer = layer.next_sibling("layer")) {
+        
+        IPyraNetLayer<NetType>::LayerType layerType = (IPyraNetLayer<NetType>::LayerType)layer.attribute("type").as_int();
+
+        IPyraNetLayer<NetType>* newLayer = NULL;
+
+        switch (layerType) {
+        case IPyraNetLayer<NetType>::Source:
+            newLayer = new IPyraNet2DSourceLayer<NetType>();
+            break;
+        case IPyraNetLayer<NetType>::Layer1D:
+            newLayer = new IPyraNet1DLayer<NetType>();
+            break;
+        case IPyraNetLayer<NetType>::Layer2D:
+            newLayer = new IPyraNet2DLayer<NetType>();
+            break;
+        }
+
+        newLayer->loadFromXML(layer);
+        appendLayerNoInit(newLayer);
+    }
+
+    return result;
 }
 
 template <class NetType>
@@ -145,6 +147,21 @@ template <class NetType>
 IPyraNet<NetType>::TrainingTechnique IPyraNet<NetType>::getTrainingTechnique() const {
     return trainingTechnique;
 }*/
+
+template <class NetType>
+void IPyraNet<NetType>::appendLayerNoInit(IPyraNetLayer<NetType>* newLayer) {
+    
+    if (newLayer == NULL)
+        return;
+
+    // link this new layer to the last layer
+    if (layers.size() > 0) {
+        IPyraNetLayer<NetType>* lastLayer = layers.back();
+        newLayer->setParentLayer(lastLayer, false);
+    }
+
+    layers.push_back(newLayer);
+}
 
 // explicit instantiations
 template class IPyraNet<float>;

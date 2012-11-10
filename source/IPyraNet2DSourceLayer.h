@@ -25,6 +25,7 @@ public:
     void getSize(int* size);
 
     void saveToXML(pugi::xml_node& node);
+    void loadFromXML(pugi::xml_node& node);
 
 private:
     cv::Mat source;
