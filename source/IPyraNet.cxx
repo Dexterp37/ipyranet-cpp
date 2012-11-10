@@ -7,6 +7,7 @@
 #include "IPyraNet2DSourceLayer.h"
 #include "IPyraNet1DLayer.h"
 #include "IPyraNet2DLayer.h"
+#include "IPyraNetSigmoidFunction.h"
 #include <assert.h>
 
 template <class NetType>
@@ -39,8 +40,6 @@ bool IPyraNet<NetType>::saveToXML(const std::string& fileName) {
         layer->saveToXML(node);
     }
 
-    layers.clear();
-
     return doc.save_file(fileName.c_str());
 }
     
@@ -67,9 +66,11 @@ bool IPyraNet<NetType>::loadFromXML(const std::string& fileName) {
             break;
         case IPyraNetLayer<NetType>::Layer1D:
             newLayer = new IPyraNet1DLayer<NetType>();
+            newLayer->setActivationFunction(new IPyraNetSigmoidFunction<NetType>());
             break;
         case IPyraNetLayer<NetType>::Layer2D:
             newLayer = new IPyraNet2DLayer<NetType>();
+            newLayer->setActivationFunction(new IPyraNetSigmoidFunction<NetType>());
             break;
         }
 
