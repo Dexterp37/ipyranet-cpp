@@ -13,6 +13,11 @@ template<class OutType> class IPyraNetLayer;
 template <class NetType>
 class IPyraNet {
 public:
+    enum TrainingTechnique {
+        Unknown = -1,
+        GradientDescend = 1
+    };
+
     IPyraNet();
     ~IPyraNet();
 
@@ -21,7 +26,17 @@ public:
 
     void destroy();
 
+    // training methods
+    void setTrainingEpochs(int epochs);
+    int getTrainingEpochs() const;
+    void setTrainingTechnique(TrainingTechnique technique);
+    //TrainingTechnique getTrainingTechnique() const;
+
 private:
+	int trainingEpochs;
+    NetType learningRate;
+    TrainingTechnique trainingTechnique;
+
     std::vector<IPyraNetLayer<NetType>*> layers;
 };
 

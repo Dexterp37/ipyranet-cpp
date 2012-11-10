@@ -7,7 +7,10 @@
 #include <assert.h>
 
 template <class NetType>
-IPyraNet<NetType>::IPyraNet() {
+IPyraNet<NetType>::IPyraNet() 
+    : trainingEpochs(0),
+    trainingTechnique(Unknown) 
+{
     layers.clear();
 }
 
@@ -63,6 +66,26 @@ void IPyraNet<NetType>::destroy() {
 
     layers.clear();
 }
+
+template <class NetType>
+void IPyraNet<NetType>::setTrainingEpochs(int epochs) {
+    trainingEpochs = epochs;
+}
+
+template <class NetType>
+int IPyraNet<NetType>::getTrainingEpochs() const {
+    return trainingEpochs;
+}
+
+template <class NetType>
+void IPyraNet<NetType>::setTrainingTechnique(TrainingTechnique technique) {
+    trainingTechnique = technique;
+}
+/*
+template <class NetType>
+IPyraNet<NetType>::TrainingTechnique IPyraNet<NetType>::getTrainingTechnique() const {
+    return trainingTechnique;
+}*/
 
 // explicit instantiations
 template class IPyraNet<float>;
