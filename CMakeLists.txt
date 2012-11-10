@@ -18,6 +18,8 @@ set(IPyraNet_SOURCE_FILES
 	source/IPyraNet2DSourceLayer.cxx
 	source/IPyraNet1DLayer.cxx
 	source/IPyraNet2DLayer.cxx
+	
+	3rdParties/pugixml-1.2/src/pugixml.cpp
 	)
 	
 set(IPyraNet_HEADER_FILES 
@@ -25,6 +27,7 @@ set(IPyraNet_HEADER_FILES
 	source/IPyraNetLayer.h
 	source/IPyraNet2DSourceLayer.h
 	source/IPyraNet2DLayer.h
+	source/IPyraNet1DLayer.h
 	source/IPyraNetActivationFunction.h
 	source/IPyraNetSigmoidFunction.h
 	)	

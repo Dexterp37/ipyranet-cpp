@@ -15,12 +15,15 @@ public:
     IPyraNet1DLayer();
     IPyraNet1DLayer(int numberNeurons, IPyraNetActivationFunction<OutType>* activationFunc = NULL);
     virtual ~IPyraNet1DLayer();
-
+    
+    LayerType getLayerType() const { return Layer1D; }
     OutType getNeuronOutput(int dimensions, int* neuronLocation);    
     int getDimensions() const;
     void getSize(int* size);
 
     void setParentLayer(IPyraNetLayer<OutType>* parent);
+
+    void saveToXML(pugi::xml_node& node);
 
 private:
     int neurons;    // number of neurons (size of the layer in 1D)

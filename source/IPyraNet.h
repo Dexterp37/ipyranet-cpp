@@ -21,6 +21,10 @@ public:
     IPyraNet();
     ~IPyraNet();
 
+    // XML serialization
+    bool saveToXML(const std::string& fileName);
+    bool loadFromXML(const std::string& fileName);
+
     void appendLayer(IPyraNetLayer<NetType>* newLayer);
     void getOutput(std::vector<NetType>& outputs);
 

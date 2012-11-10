@@ -58,6 +58,18 @@ void IPyraNet2DSourceLayer<OutType>::getSize(int* size) {
     size[1] = source.rows;
 }
 
+
+template<class OutType>
+void IPyraNet2DSourceLayer<OutType>::saveToXML(pugi::xml_node& node) {
+
+    // save the size
+    pugi::xml_attribute widthAttr = node.append_attribute("width");
+    widthAttr.set_value(source.cols);
+
+    pugi::xml_attribute heightAttr = node.append_attribute("height");
+    heightAttr.set_value(source.rows);
+}
+
 // explicit instantiations
 template class IPyraNet2DSourceLayer<float>;
 template class IPyraNet2DSourceLayer<double>;

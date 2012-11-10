@@ -184,6 +184,63 @@ OutType IPyraNet2DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLoc
 }
 
 template<class OutType>
+void IPyraNet2DLayer<OutType>::saveToXML(pugi::xml_node& node) {
+
+    // save the size
+    pugi::xml_attribute widthAttr = node.append_attribute("width");
+    widthAttr.set_value(width);
+
+    pugi::xml_attribute heightAttr = node.append_attribute("height");
+    heightAttr.set_value(height);
+
+    // receptive, overlap and inhibitory
+    pugi::xml_attribute receptiveAttr = node.append_attribute("receptive");
+    receptiveAttr.set_value(receptiveSize);
+    
+    pugi::xml_attribute overlapAttr = node.append_attribute("overlap");
+    overlapAttr.set_value(overlap);
+    
+    pugi::xml_attribute inhibitoryAttr = node.append_attribute("inhibitory");
+    inhibitoryAttr.set_value(inhibitorySize);
+
+    // dump the weights
+    pugi::xml_node weightsNode = node.append_child("weights");
+    for (int u = 0; u < weights.size(); ++u) {
+        for (int v = 0; v < weights[u].size(); ++v) {
+            pugi::xml_node weightNode = weightsNode.append_child("weight");
+            
+            // weight indices as attributes
+            pugi::xml_attribute index1Attr = weightNode.append_attribute("index1");
+            index1Attr.set_value(u);
+
+            pugi::xml_attribute index2Attr = weightNode.append_attribute("index2");
+            index2Attr.set_value(v);
+
+            pugi::xml_attribute weightAttr = weightNode.append_attribute("value");
+            weightAttr.set_value(weights[u][v]);
+        }
+    }
+
+    // dump the biases
+    pugi::xml_node biasesNode = node.append_child("biases");
+    for (int u = 0; u < width; ++u) {
+        for (int v = 0; v < height; ++v) {
+            pugi::xml_node biasNode = biasesNode.append_child("weight");
+            
+            // weight indices as attributes
+            pugi::xml_attribute index1Attr = biasNode.append_attribute("index1");
+            index1Attr.set_value(u);
+
+            pugi::xml_attribute index2Attr = biasNode.append_attribute("index2");
+            index2Attr.set_value(v);
+
+            pugi::xml_attribute biasAttr = biasNode.append_attribute("value");
+            biasAttr.set_value(biases[u][v]);
+        }
+    }
+}
+
+template<class OutType>
 int IPyraNet2DLayer<OutType>::getDimensions() const {
     return 2;
 }

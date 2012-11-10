@@ -6,10 +6,19 @@
 #define _IPyranetLayer_h_
 
 #include "IPyraNetActivationFunction.h"
+#include "../3rdParties/pugixml-1.2/src/pugixml.hpp"
 
 template<typename OutType>
 class IPyraNetLayer {
 public:
+
+    enum LayerType {
+        Unknown = -1,
+        Source = 1,
+        Layer2D,
+        Layer1D
+    };
+
     IPyraNetLayer() : parentLayer(0), activationFunction(0) { };
     virtual ~IPyraNetLayer() { 
         parentLayer = 0; 
@@ -18,6 +27,8 @@ public:
         
         activationFunction = 0;
     };
+
+    virtual LayerType getLayerType() const = 0;
 
     virtual OutType getNeuronOutput(int dimensions, int* neuronLocation) = 0;
     virtual int getDimensions() const = 0;
@@ -28,6 +39,9 @@ public:
 
     void setActivationFunction(IPyraNetActivationFunction<OutType>* func) { activationFunction = func; }
     IPyraNetActivationFunction<OutType>* getActivationFunction() { return activationFunction; }
+
+    // serialization helper
+    virtual void saveToXML(pugi::xml_node& node) = 0;
 
 private:
     // previous (adjacent bigger) layer in the pyramid

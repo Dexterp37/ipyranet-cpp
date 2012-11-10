@@ -16,6 +16,8 @@ public:
     IPyraNet2DLayer(int receptive, int inhibitory, int overlap, IPyraNetActivationFunction<OutType>* activationFunc = NULL);
     virtual ~IPyraNet2DLayer();
 
+    LayerType getLayerType() const { return Layer2D; }
+
     void setReceptiveFieldSize(int r) { receptiveSize = r; }
     int getReceptiveFieldSize() const { return receptiveSize; }
 
@@ -30,6 +32,8 @@ public:
     void getSize(int* size);
 
     void setParentLayer(IPyraNetLayer<OutType>* parent);
+
+    void saveToXML(pugi::xml_node& node);
 
 private:
     int width;
