@@ -25,6 +25,7 @@ public:
     bool saveToXML(const std::string& fileName);
     bool loadFromXML(const std::string& fileName);
 
+    // layer management
     void appendLayer(IPyraNetLayer<NetType>* newLayer);
     void getOutput(std::vector<NetType>& outputs);
 
@@ -35,6 +36,8 @@ public:
     int getTrainingEpochs() const;
     void setTrainingTechnique(TrainingTechnique technique);
     //TrainingTechnique getTrainingTechnique() const;
+
+    void train(const std::string&  path);
 
 private:
 	int trainingEpochs;

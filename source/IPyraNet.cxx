@@ -9,6 +9,7 @@
 #include "IPyraNet2DLayer.h"
 #include "IPyraNetSigmoidFunction.h"
 #include <assert.h>
+#include "../3rdParties/dirent-1.12.1/dirent.h" // this is NOT cross platform!
 
 template <class NetType>
 IPyraNet<NetType>::IPyraNet() 
@@ -79,6 +80,64 @@ bool IPyraNet<NetType>::loadFromXML(const std::string& fileName) {
     }
 
     return result;
+}
+
+#include <iostream> // removeme
+
+template <class NetType>
+void IPyraNet<NetType>::train(const std::string& path) {
+    
+    std::string facePath(path);
+    facePath.append("/face");
+    NetType faceDesired[2] = { 1.0, 0.0 };
+
+    std::string nonFacePath(path);
+    nonFacePath.append("/non-face");
+    NetType nonFaceDesired[2] = { 0.0, 1.0 };
+
+    DIR *faceDir = opendir (facePath.c_str());
+    if (faceDir == NULL) 
+        return;
+
+    struct dirent *ent;
+
+    // iterate through files
+    IPyraNet2DSourceLayer<NetType>* sourceLayer = ((IPyraNet2DSourceLayer<NetType>*)layers[0]);
+    while ((ent = readdir (faceDir)) != NULL) {
+
+        // skip "." and ".."
+        if (ent->d_name[0] == '.')
+            continue;
+
+        //printf ("%s\n", ent->d_name);
+        std::cout << "Processing " << ent->d_name;
+
+        // extract the full filename
+        std::string fullPath(facePath);
+        fullPath.append("/");
+        fullPath.append(ent->d_name);
+
+        // process this image and compute the output
+        if (!sourceLayer->load(fullPath.c_str())) {
+            std::cout << "ERROR!" << std::endl;
+            continue;
+        }
+
+        std::vector<NetType> outputs;
+        getOutput(outputs);
+
+        std::cout << " OUT [" << outputs[0] << " | " << outputs[1] << "] ";
+
+        // compute the error signal
+        NetType error[2] = { 
+            faceDesired[0] - outputs[0],
+            faceDesired[1] - outputs[1] 
+        }; 
+
+        std::cout << " Err [" << error[0] << " | " << error[1] << "]" << std::endl;
+    }
+
+    closedir (faceDir);
 }
 
 template <class NetType>
