@@ -63,6 +63,17 @@ void IPyraNet1DLayer<OutType>::getSize(int* size) {
 }
 
 template<class OutType>
+OutType IPyraNet1DLayer<OutType>::getNeuronWeight(int dimensions, int* neuronLocation) {
+    // weights are "per connection", so there is a weight for each neuron in the
+    // previous layer connecting to a neuron in this layer.
+    assert (dimensions == 2);
+    assert (neuronLocation != NULL);
+    assert (neuronLocation[0] >= 0 && neuronLocation[1] >= 0);
+
+    return weights[neuronLocation[0]][neuronLocation[1]];
+}
+
+template<class OutType>
 void IPyraNet1DLayer<OutType>::setParentLayer(IPyraNetLayer<OutType>* parent, bool init) { 
     
     assert(parent != NULL);

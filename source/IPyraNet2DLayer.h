@@ -27,10 +27,11 @@ public:
     void setInhibitoryFieldSize(int i) { inhibitorySize = i; }
     int getInhibitoryFieldSize() const { return inhibitorySize; }
     
-    OutType getErrorSensitivity(int dimensions, int* neuronLocation, OutType multiplier);
+    OutType getErrorSensitivity(int dimensions, int* neuronLocation, OutType multiplier) { return 0; };
     OutType getNeuronOutput(int dimensions, int* neuronLocation);    
     int getDimensions() const;
     void getSize(int* size);
+    OutType getNeuronWeight(int dimensions, int* neuronLocation);
 
     void setParentLayer(IPyraNetLayer<OutType>* parent, bool init);
 

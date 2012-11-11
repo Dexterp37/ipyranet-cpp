@@ -21,6 +21,7 @@ public:
     OutType getNeuronOutput(int dimensions, int* neuronLocation);    
     int getDimensions() const;
     void getSize(int* size);
+    OutType getNeuronWeight(int dimensions, int* neuronLocation);
 
     void setParentLayer(IPyraNetLayer<OutType>* parent, bool init);
 

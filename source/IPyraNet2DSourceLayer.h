@@ -20,10 +20,11 @@ public:
 
     bool load(const std::string& fileName);
     
-    OutType getErrorSensitivity(int dimensions, int* neuronLocation, OutType multiplier);
+    OutType getErrorSensitivity(int dimensions, int* neuronLocation, OutType multiplier) { return 0; };
     OutType getNeuronOutput(int dimensions, int* neuronLocation);    
     int getDimensions() const;
     void getSize(int* size);
+    OutType getNeuronWeight(int dimensions, int* neuronLocation) { return 0; }
 
     void saveToXML(pugi::xml_node& node);
     void loadFromXML(pugi::xml_node& node);

@@ -197,6 +197,16 @@ void IPyraNet2DLayer<OutType>::getSize(int* size) {
 }
 
 template<class OutType>
+OutType IPyraNet2DLayer<OutType>::getNeuronWeight(int dimensions, int* neuronLocation) {
+    // weights are "per neuron", so there is a weight for each parent's neuron
+    assert (dimensions == 2);
+    assert (neuronLocation != NULL);
+    assert (neuronLocation[0] >= 0 && neuronLocation[1] >= 0);
+
+    return weights[neuronLocation[0]][neuronLocation[1]];
+}
+
+template<class OutType>
 void IPyraNet2DLayer<OutType>::setParentLayer(IPyraNetLayer<OutType>* parent, bool init) { 
     
     assert(parent != NULL);
