@@ -123,20 +123,19 @@ void IPyraNet<NetType>::train(const std::string& path) {
             continue;
         }
 
-        backpropagation_run();
-
+        // compute network output
         std::vector<NetType> outputs;
         getOutput(outputs);
 
-        std::cout << " OUT [" << outputs[0] << " | " << outputs[1] << "] ";
-
         // compute the error signal
-        NetType error[2] = { 
-            faceDesired[0] - outputs[0],
-            faceDesired[1] - outputs[1] 
-        }; 
+        std::vector<NetType> errorSignal(outputs.size());
+        for (int k = 0; k < errorSignal.size(); ++k)
+            errorSignal[k] = faceDesired[k] - outputs[k];
 
-        std::cout << " Err [" << error[0] << " | " << error[1] << "]" << std::endl;
+        backpropagation_run(errorSignal);
+
+        std::cout << " OUT [" << outputs[0] << " | " << outputs[1] << "] ";
+        std::cout << " Err [" << errorSignal[0] << " | " << errorSignal[1] << "]" << std::endl;
     }
 
     closedir (faceDir);
@@ -226,9 +225,23 @@ void IPyraNet<NetType>::appendLayerNoInit(IPyraNetLayer<NetType>* newLayer) {
 }
 
 template <class NetType>
-void IPyraNet<NetType>::backpropagation_run() {
+void IPyraNet<NetType>::backpropagation_run(const std::vector<NetType>& errorSignal) {
 
     // compute deltas for the output layer
+    IPyraNet1DLayer<NetType>* outputLayer = ((IPyraNet1DLayer<NetType>*)layers.back());
+    
+    int location[2] = {0, 0};
+    int outputNeurons = 0;
+    outputLayer->getSize(&outputNeurons);
+    std::vector<NetType> outputDeltas;
+    
+    for (int n = 0; n < outputNeurons; ++n) {
+        outputDeltas.push_back(outputLayer->getErrorSensitivity(1, location, errorSignal[n]));
+    }
+
+    // TODO: compute other 1D layers deltas
+    // TODO: compute other 2D layers deltas
+    // TODO: compute the error gradient
 }
 
 // explicit instantiations

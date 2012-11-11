@@ -29,8 +29,56 @@ IPyraNet1DLayer<OutType>::~IPyraNet1DLayer() {
 }
 
 template<class OutType>
+OutType IPyraNet1DLayer<OutType>::getErrorSensitivity(int dimensions, int* neuronLocation, OutType multiplier) {
+    
+    OutType accumulator = getWeightedSumInput(dimensions, neuronLocation);
+
+    // apply the activation function
+    OutType result = getActivationFunction()->derivative(accumulator);
+
+    return result * multiplier;
+}
+
+template<class OutType>
 OutType IPyraNet1DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLocation) {
     
+    OutType accumulator = getWeightedSumInput(dimensions, neuronLocation);
+
+    // apply the activation function
+    OutType result = getActivationFunction()->compute(accumulator);
+
+    return result;
+}
+
+template<class OutType>
+int IPyraNet1DLayer<OutType>::getDimensions() const {
+    return 1;
+}
+
+template<class OutType>
+void IPyraNet1DLayer<OutType>::getSize(int* size) {
+    assert(size != NULL);
+
+    size[0] = neurons;
+}
+
+template<class OutType>
+void IPyraNet1DLayer<OutType>::setParentLayer(IPyraNetLayer<OutType>* parent, bool init) { 
+    
+    assert(parent != NULL);
+    
+    // calls base class
+    IPyraNetLayer<OutType>::setParentLayer(parent);
+    
+    // init weights and biases
+    if (init) {
+        initWeights();
+        initBiases();
+    }
+}
+
+template<class OutType>
+OutType IPyraNet1DLayer<OutType>::getWeightedSumInput(int dimensions, int* neuronLocation) {
     // sanity checks
     assert (dimensions == 1);
     assert (neuronLocation != NULL);
@@ -92,37 +140,7 @@ OutType IPyraNet1DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLoc
     // apply the bias
     accumulator += biases[n];
 
-    // apply the activation function
-    OutType result = getActivationFunction()->compute(accumulator);
-
-    return result;
-}
-
-template<class OutType>
-int IPyraNet1DLayer<OutType>::getDimensions() const {
-    return 1;
-}
-
-template<class OutType>
-void IPyraNet1DLayer<OutType>::getSize(int* size) {
-    assert(size != NULL);
-
-    size[0] = neurons;
-}
-
-template<class OutType>
-void IPyraNet1DLayer<OutType>::setParentLayer(IPyraNetLayer<OutType>* parent, bool init) { 
-    
-    assert(parent != NULL);
-    
-    // calls base class
-    IPyraNetLayer<OutType>::setParentLayer(parent);
-    
-    // init weights and biases
-    if (init) {
-        initWeights();
-        initBiases();
-    }
+    return accumulator;
 }
 
 template<class OutType>

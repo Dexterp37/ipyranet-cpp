@@ -26,7 +26,8 @@ public:
 
     void setInhibitoryFieldSize(int i) { inhibitorySize = i; }
     int getInhibitoryFieldSize() const { return inhibitorySize; }
-
+    
+    OutType getErrorSensitivity(int dimensions, int* neuronLocation, OutType multiplier);
     OutType getNeuronOutput(int dimensions, int* neuronLocation);    
     int getDimensions() const;
     void getSize(int* size);

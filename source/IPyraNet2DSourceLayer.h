@@ -19,7 +19,8 @@ public:
     LayerType getLayerType() const { return Source; }
 
     bool load(const std::string& fileName);
-
+    
+    OutType getErrorSensitivity(int dimensions, int* neuronLocation, OutType multiplier);
     OutType getNeuronOutput(int dimensions, int* neuronLocation);    
     int getDimensions() const;
     void getSize(int* size);

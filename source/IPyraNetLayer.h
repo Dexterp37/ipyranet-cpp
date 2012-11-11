@@ -30,6 +30,7 @@ public:
 
     virtual LayerType getLayerType() const = 0;
 
+    virtual OutType getErrorSensitivity(int dimensions, int* neuronLocation, OutType multiplier) = 0;
     virtual OutType getNeuronOutput(int dimensions, int* neuronLocation) = 0;
     virtual int getDimensions() const = 0;
     virtual void getSize(int* size) = 0;

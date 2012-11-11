@@ -17,6 +17,7 @@ public:
     virtual ~IPyraNet1DLayer();
     
     LayerType getLayerType() const { return Layer1D; }
+    OutType getErrorSensitivity(int dimensions, int* neuronLocation, OutType multiplier);
     OutType getNeuronOutput(int dimensions, int* neuronLocation);    
     int getDimensions() const;
     void getSize(int* size);
@@ -36,6 +37,7 @@ private:
     // one bias per neuron/output
     std::vector<OutType> biases;
 
+    OutType getWeightedSumInput(int dimensions, int* neuronLocation);
     void initWeights();
     void initBiases();
 };
