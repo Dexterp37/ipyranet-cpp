@@ -12,6 +12,7 @@ public:
     virtual ~IPyraNetActivationFunction() { };
 
     virtual OutType compute(OutType val) = 0;
+    virtual OutType derivative(OutType val) = 0;
 };
 
 #endif // _IPyraNetActivationFunction_h_

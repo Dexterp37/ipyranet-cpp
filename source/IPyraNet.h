@@ -47,6 +47,7 @@ private:
     std::vector<IPyraNetLayer<NetType>*> layers;
 
     void appendLayerNoInit(IPyraNetLayer<NetType>* newLayer);
+    void backpropagation_run();
 };
 
 #endif // _IPyraNet_h_

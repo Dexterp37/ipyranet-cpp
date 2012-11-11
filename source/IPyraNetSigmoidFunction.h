@@ -14,10 +14,20 @@ public:
     IPyraNetSigmoidFunction() { };
     virtual ~IPyraNetSigmoidFunction() { };
 
-    virtual OutType compute(OutType val) {
+    OutType compute(OutType val) {
         OutType exponential = exp((OutType)-val);
         
         return static_cast<OutType>(1 / (1 + exponential));
+    };
+
+    OutType derivative(OutType val) {
+        // Sigmoid Function derivative considerations taken from here
+        // http://www.learnartificialneuralnetworks.com/backpropagation.html
+        // http://www.wkiri.com/cs461-w08/Lectures/Lec4/ANN-deriv.pdf
+    
+        OutType sigm = compute(val);
+        
+        return static_cast<OutType>(sigm * (1 - sigm));
     };
 };
 

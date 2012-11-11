@@ -123,6 +123,8 @@ void IPyraNet<NetType>::train(const std::string& path) {
             continue;
         }
 
+        backpropagation_run();
+
         std::vector<NetType> outputs;
         getOutput(outputs);
 
@@ -221,6 +223,12 @@ void IPyraNet<NetType>::appendLayerNoInit(IPyraNetLayer<NetType>* newLayer) {
     }
 
     layers.push_back(newLayer);
+}
+
+template <class NetType>
+void IPyraNet<NetType>::backpropagation_run() {
+
+    // compute deltas for the output layer
 }
 
 // explicit instantiations
