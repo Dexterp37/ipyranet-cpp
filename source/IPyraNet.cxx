@@ -226,29 +226,55 @@ void IPyraNet<NetType>::appendLayerNoInit(IPyraNetLayer<NetType>* newLayer) {
 
 template <class NetType>
 void IPyraNet<NetType>::backpropagation_run(const std::vector<NetType>& errorSignal) {
+    
+    // initialize delta storage for each layer (TODO: move outside the backpropagation_run function.. in train()!)
+    struct LayerDeltas {
+        std::vector<std::vector<NetType> > deltas;
+    };
 
+    std::vector<LayerDeltas> layersDeltas(layers.size());
+
+    int layerSize[2];
+    for (unsigned int l = 0; l < layers.size(); ++l) {
+        layers[l]->getSize(layerSize);
+
+        layersDeltas[l].deltas.resize(layerSize[0]);
+
+        // this is a 2D layer
+        if (layers[l]->getDimensions() == 2) {
+
+            for (int dx = 0; dx < layerSize[0]; ++dx) {
+                layersDeltas[l].deltas[dx].resize(layerSize[1]);
+            }
+
+        } else { // this is a 1D layer
+
+            for (int dx = 0; dx < layerSize[0]; ++dx) {
+                layersDeltas[l].deltas[dx].resize(1);
+            }
+        }
+    }
+    
     // compute deltas for the output layer
     int currentLayer = layers.size() - 1;
     int location[2] = {0, 0};
     int outputNeurons = 0;
-    std::vector<NetType> outputDeltas;  // TODO: this should go inside the deltas data structure which holds deltas for every layer
 
     layers[currentLayer]->getSize(&outputNeurons);
     
     for (int n = 0; n < outputNeurons; ++n) {
-        outputDeltas.push_back(layers[currentLayer]->getErrorSensitivity(1, location, errorSignal[n]));
+        layersDeltas[currentLayer].deltas[n][0] = layers[currentLayer]->getErrorSensitivity(1, location, errorSignal[n]);
     }
 
     // compute other 1D layers deltas
     int lastLayerNeurons = outputNeurons;
-    int currentLayer = layers.size() - 2;
+    currentLayer = layers.size() - 2;
     for (currentLayer; currentLayer > 0; --currentLayer) {
 
         if (layers[currentLayer]->getLayerType() != IPyraNetLayer<NetType>::Layer1D)
             break;
         
         // compute a delta for each neuron on this layer
-        std::vector<NetType> layerDeltas;
         layers[currentLayer]->getSize(&outputNeurons);
 
         for (int n = 0; n < outputNeurons; ++n) {
@@ -260,21 +286,57 @@ void IPyraNet<NetType>::backpropagation_run(const std::vector<NetType>& errorSig
             for (int m = 0; m < lastLayerNeurons; ++m) {
                 weightLocation[1] = m;
 
-                // TODO: we should create a data structure which holds deltas for each layer. Deltas can be 2D ([][])
-                summation += /*lastLayerDeltas[m]*/ 1 * layers[currentLayer + 1]->getNeuronWeight(2, weightLocation);
+                summation += layersDeltas[currentLayer + 1].deltas[m][0] * layers[currentLayer + 1]->getNeuronWeight(2, weightLocation);
             }
             
-            layerDeltas.push_back(layers[currentLayer]->getErrorSensitivity(1, location, summation));
+            layersDeltas[currentLayer].deltas[n][0] = layers[currentLayer]->getErrorSensitivity(1, location, summation);
         }
 
         lastLayerNeurons = outputNeurons;
     }
 
-    // TODO: compute other 2D layers deltas
+    // compute other 2D layers deltas
+    bool lastPyramidalLayer = true;
+    int lastLayerSize[2];
+    int outputSize[2];
     for (currentLayer; currentLayer > 0; --currentLayer) {
 
         if (layers[currentLayer]->getLayerType() != IPyraNetLayer<NetType>::Layer2D)
             break;
+
+        if (lastPyramidalLayer) {
+            
+            // compute deltas as if it were a 1D layer, but rearrange deltas as a 2D gris
+            // because this is the last pyramida layer (2D) before 1D layers
+            layers[currentLayer]->getSize(outputSize);
+
+            for (int u = 0; u < outputSize[0]; ++u) {
+                for (int v = 0; v < outputSize[1]; ++v) {
+
+                    // compute the inner summation of (16) in the paper
+                    NetType summation = 1;
+                    //parentNeuronIndex = (m_v * parentSize[1]) + m_u;
+                    int n = (v * outputSize[1]) + u;//u * outputSize[0] + v;  // TODO: check? (17)
+                    int weightLocation[2] = {n, 0};
+
+                    for (int m = 0; m < lastLayerNeurons; ++m) {
+                        weightLocation[1] = m;
+
+                        summation += layersDeltas[currentLayer + 1].deltas[m][0] * layers[currentLayer + 1]->getNeuronWeight(2, weightLocation);
+                    }
+            
+                    layersDeltas[currentLayer].deltas[u][v] = layers[currentLayer]->getErrorSensitivity(1, location, summation);
+                }
+            }
+
+            lastLayerSize[0] = outputSize[0];
+            lastLayerSize[1] = outputSize[1];
+
+            lastPyramidalLayer = false;
+            continue;
+        }
+
+        // TODO: other pyramidal
     }
 
     // TODO: compute the error gradient
