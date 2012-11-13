@@ -39,7 +39,14 @@ public:
 
     void train(const std::string&  path);
 
-private:
+private:    
+    
+    struct LayerDeltas {
+        std::vector<std::vector<NetType> > deltas;
+    };
+
+    std::vector<LayerDeltas> layersDeltas;  // deltas storage
+
 	int trainingEpochs;
     NetType learningRate;
     TrainingTechnique trainingTechnique;

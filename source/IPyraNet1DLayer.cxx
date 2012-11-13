@@ -90,6 +90,7 @@ void IPyraNet1DLayer<OutType>::setParentLayer(IPyraNetLayer<OutType>* parent, bo
 
 template<class OutType>
 OutType IPyraNet1DLayer<OutType>::getWeightedSumInput(int dimensions, int* neuronLocation) {
+
     // sanity checks
     assert (dimensions == 1);
     assert (neuronLocation != NULL);

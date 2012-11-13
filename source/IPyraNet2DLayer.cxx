@@ -37,47 +37,7 @@ IPyraNet2DLayer<OutType>::~IPyraNet2DLayer() {
 }
 
 template<class OutType>
-void IPyraNet2DLayer<OutType>::initWeights() {
-
-    assert(getParentLayer() != NULL);
-
-    IPyraNetLayer<OutType>* parent = getParentLayer();
-    
-    // get parent size
-    int parentSize[2];
-    parent->getSize(parentSize);
-
-    // we need to have as many weights as the number of neurons in last
-    // layer.
-    weights.resize(parentSize[0]);
-
-    for (int u = 0; u < parentSize[0]; ++u) {
-
-        weights[u].resize(parentSize[1]);
-
-        for (int v = 0; v < parentSize[1]; ++v) {
-            weights[u][v] = UNIFORM_PLUS_MINUS_ONE;
-        }
-    }
-}
-
-template<class OutType>
-void IPyraNet2DLayer<OutType>::initBiases() {
-
-    biases.resize(width);
-
-    for (int u = 0; u < width; ++u) {
-
-        biases[u].resize(height);
-
-        for (int v = 0; v < height; ++v) {
-            biases[u][v] = UNIFORM_PLUS_MINUS_ONE;
-        }
-    }
-}
-
-template<class OutType>
-OutType IPyraNet2DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLocation) {
+OutType IPyraNet2DLayer<OutType>::getWeightedSumInput(int dimensions, int* neuronLocation) {
     
     // sanity checks
     assert (dimensions == 2);
@@ -178,7 +138,66 @@ OutType IPyraNet2DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLoc
         }
     }
 
-    OutType result = getActivationFunction()->compute(receptiveAccumulator - inhibitoryAccumulator + bias);
+    return receptiveAccumulator - inhibitoryAccumulator + bias;
+}
+
+template<class OutType>
+void IPyraNet2DLayer<OutType>::initWeights() {
+
+    assert(getParentLayer() != NULL);
+
+    IPyraNetLayer<OutType>* parent = getParentLayer();
+    
+    // get parent size
+    int parentSize[2];
+    parent->getSize(parentSize);
+
+    // we need to have as many weights as the number of neurons in last
+    // layer.
+    weights.resize(parentSize[0]);
+
+    for (int u = 0; u < parentSize[0]; ++u) {
+
+        weights[u].resize(parentSize[1]);
+
+        for (int v = 0; v < parentSize[1]; ++v) {
+            weights[u][v] = UNIFORM_PLUS_MINUS_ONE;
+        }
+    }
+}
+
+template<class OutType>
+void IPyraNet2DLayer<OutType>::initBiases() {
+
+    biases.resize(width);
+
+    for (int u = 0; u < width; ++u) {
+
+        biases[u].resize(height);
+
+        for (int v = 0; v < height; ++v) {
+            biases[u][v] = UNIFORM_PLUS_MINUS_ONE;
+        }
+    }
+}
+
+template<class OutType>
+OutType IPyraNet2DLayer<OutType>::getErrorSensitivity(int dimensions, int* neuronLocation, OutType multiplier) {
+    
+    OutType accumulator = getWeightedSumInput(dimensions, neuronLocation);
+
+    // apply the activation function
+    OutType result = getActivationFunction()->derivative(accumulator);
+
+    return result * multiplier;
+}
+
+template<class OutType>
+OutType IPyraNet2DLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLocation) {
+
+    OutType accumulator = getWeightedSumInput(dimensions, neuronLocation);    
+
+    OutType result = getActivationFunction()->compute(accumulator);
 
     return result;
 }

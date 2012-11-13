@@ -27,7 +27,7 @@ public:
     void setInhibitoryFieldSize(int i) { inhibitorySize = i; }
     int getInhibitoryFieldSize() const { return inhibitorySize; }
     
-    OutType getErrorSensitivity(int dimensions, int* neuronLocation, OutType multiplier) { return 0; };
+    OutType getErrorSensitivity(int dimensions, int* neuronLocation, OutType multiplier);
     OutType getNeuronOutput(int dimensions, int* neuronLocation);    
     int getDimensions() const;
     void getSize(int* size);
@@ -50,6 +50,7 @@ private:
     std::vector<std::vector<OutType> > weights;
     std::vector<std::vector<OutType> > biases;
 
+    OutType getWeightedSumInput(int dimensions, int* neuronLocation);
     void initWeights();
     void initBiases();
 };
