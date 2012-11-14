@@ -99,31 +99,10 @@ void IPyraNet<NetType>::train(const std::string& path) {
     if (faceDir == NULL) 
         return;
 
-    // initialize delta storage for each layer
-    layersDeltas.resize(layers.size());
-
-    int layerSize[2];
-    for (unsigned int l = 0; l < layers.size(); ++l) {
-        layers[l]->getSize(layerSize);
-
-        layersDeltas[l].deltas.resize(layerSize[0]);
-
-        // this is a 2D layer
-        if (layers[l]->getDimensions() == 2) {
-
-            for (int dx = 0; dx < layerSize[0]; ++dx) {
-                layersDeltas[l].deltas[dx].resize(layerSize[1]);
-            }
-
-        } else { // this is a 1D layer
-
-            for (int dx = 0; dx < layerSize[0]; ++dx) {
-                layersDeltas[l].deltas[dx].resize(1);
-            }
-        }
-    }
-
     struct dirent *ent;
+
+    initDeltaStorage();
+    initGradientStorage();
 
     // iterate through files
     IPyraNet2DSourceLayer<NetType>* sourceLayer = ((IPyraNet2DSourceLayer<NetType>*)layers[0]);
@@ -156,7 +135,7 @@ void IPyraNet<NetType>::train(const std::string& path) {
         for (size_t k = 0; k < errorSignal.size(); ++k)
             errorSignal[k] = faceDesired[k] - outputs[k];
 
-        backpropagation_run(errorSignal);
+        backpropagation(errorSignal);
 
         std::cout << " OUT [" << outputs[0] << " | " << outputs[1] << "] ";
         std::cout << " Err [" << errorSignal[0] << " | " << errorSignal[1] << "]" << std::endl;
@@ -249,9 +228,135 @@ void IPyraNet<NetType>::appendLayerNoInit(IPyraNetLayer<NetType>* newLayer) {
 }
 
 template <class NetType>
-void IPyraNet<NetType>::backpropagation_run(const std::vector<NetType>& errorSignal) {
+void IPyraNet<NetType>::initDeltaStorage() {
+
+    // initialize delta storage for each layer
+    layersDeltas.resize(layers.size());
+
+    int layerSize[2];
+    for (unsigned int l = 0; l < layers.size(); ++l) {
+        layers[l]->getSize(layerSize);
+
+        layersDeltas[l].deltas.resize(layerSize[0]);
+
+        // this is a 2D layer
+        if (layers[l]->getDimensions() == 2) {
+
+            for (int dx = 0; dx < layerSize[0]; ++dx) {
+                layersDeltas[l].deltas[dx].resize(layerSize[1]);
+            }
+
+        } else { // this is a 1D layer
+
+            for (int dx = 0; dx < layerSize[0]; ++dx) {
+                layersDeltas[l].deltas[dx].resize(1);
+            }
+        }
+    }
+}
+
+template <class NetType>
+void IPyraNet<NetType>::initGradientStorage() {
     
-    // compute deltas for the output layer
+    // initialize gradient storage for each layer
+    layersGradient.resize(layers.size());
+
+    // get the size of source layer
+    int parentSize[2];
+    int parentDims = 2;
+
+    layers[0]->getSize(parentSize);
+
+    for (unsigned int l = 1; l < layers.size(); ++l) {
+
+        // 2D layer
+        if (layers[l]->getDimensions() == 2) {
+
+            // we need to have as many weights as the number of neurons in last
+            // layer.
+            layersGradient[l].weightsGrad.resize(parentSize[0]);
+
+            for (int u = 0; u < parentSize[0]; ++u) {
+
+                layersGradient[l].weightsGrad[u].resize(parentSize[1]);
+
+                for (int v = 0; v < parentSize[1]; ++v) {
+                    layersGradient[l].weightsGrad[u][v] = 0.0;
+                }
+            }
+
+            // now the weights gradient. A bias for each neuron of current layer.
+            // save it in "parentSize", so that it is already updated.
+            layers[l]->getSize(parentSize);
+
+            layersGradient[l].biasesGrad.resize(parentSize[0]);
+
+            for (int u = 0; u < parentSize[0]; ++u) {
+
+                layersGradient[l].biasesGrad[u].resize(parentSize[1]);
+
+                for (int v = 0; v < parentSize[1]; ++v) {
+                    layersGradient[l].biasesGrad[u][v] = 0.0;
+                }
+            }
+
+        } else {    // 1D layer
+                
+            // we can connect to both 1D and 2D layers so handle both
+            // cases
+            int inputNeurons = 0; 
+            if (parentDims == 2) {
+                inputNeurons = parentSize[0] * parentSize[1];
+            } else
+                inputNeurons = parentSize[0];
+
+            
+            int neurons = 0;
+            layers[l]->getSize(&neurons);
+
+            // we need to have a weight for each connection going from
+            // each input to every neuron in this layer.
+            layersGradient[l].weightsGrad.resize(inputNeurons);
+
+            for (int u = 0; u < inputNeurons; ++u) {
+
+                layersGradient[l].weightsGrad[u].resize(neurons);
+
+                for (unsigned int v = 0; v < neurons; ++v) {
+                    layersGradient[l].weightsGrad[u][v] = 0.0;
+                }
+            }
+
+            // now enough room for the biases    
+            layersGradient[l].biasesGrad.resize(neurons);
+
+            for (unsigned int u = 0; u < neurons; ++u) {
+                layersGradient[l].biasesGrad[u].resize(1);
+                layersGradient[l].biasesGrad[u][0] = 0.0;
+            }
+
+        }
+
+        // update parent dims
+        layers[l]->getSize(parentSize);
+        parentDims = layers[l]->getDimensions();
+    }
+}
+
+template <class NetType>
+void IPyraNet<NetType>::backpropagation(const std::vector<NetType>& errorSignal) {
+
+    // compute sensitivities (deltas)
+    computeErrorSensitivities(errorSignal);
+
+    // compute the gradient
+    computeGradient();
+}
+
+template <class NetType>
+void IPyraNet<NetType>::computeErrorSensitivities(const std::vector<NetType>& errorSignal) {
+    
+    // compute deltas (error sensitivities) for the output layer
     int currentLayer = layers.size() - 1;
     int location[2] = {0, 0};
     int outputNeurons = 0;
@@ -392,8 +497,26 @@ void IPyraNet<NetType>::backpropagation_run(const std::vector<NetType>& errorSig
         lastLayerSize[0] = outputSize[0];
         lastLayerSize[1] = outputSize[1];
     }
+}
 
-    // TODO: compute the error gradient
+template <class NetType>
+void IPyraNet<NetType>::computeGradient() {
+    
+    // this gets called for each sample (image), but we need to cumulate it!
+
+    // compute the error gradient for 1D layers
+    int currentLayer = layers.size() - 1;
+    int location[2] = {0, 0};
+
+    for (currentLayer; currentLayer > 0; --currentLayer) {
+
+        if (layers[currentLayer]->getLayerType() != IPyraNetLayer<NetType>::Layer1D)
+            break;
+
+        //layersDeltas[currentLayer].deltas[n][0] 
+    }
+
+    // TODO: compute the error gradient for 2D layers
 }
 
 // explicit instantiations

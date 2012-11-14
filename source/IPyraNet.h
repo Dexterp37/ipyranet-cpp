@@ -45,7 +45,13 @@ private:
         std::vector<std::vector<NetType> > deltas;
     };
 
+    struct LayerGradient {
+        std::vector<std::vector<NetType> > weightsGrad;
+        std::vector<std::vector<NetType> > biasesGrad;
+    };
+
     std::vector<LayerDeltas> layersDeltas;  // deltas storage
+    std::vector<LayerGradient> layersGradient;  // gradient storage
 
 	int trainingEpochs;
     NetType learningRate;
@@ -54,7 +60,11 @@ private:
     std::vector<IPyraNetLayer<NetType>*> layers;
 
     void appendLayerNoInit(IPyraNetLayer<NetType>* newLayer);
-    void backpropagation_run(const std::vector<NetType>& errorSignal);
+    void initDeltaStorage();
+    void initGradientStorage();
+    void backpropagation(const std::vector<NetType>& errorSignal);
+    void computeErrorSensitivities(const std::vector<NetType>& errorSignal);
+    void computeGradient();
 };
 
 #endif // _IPyraNet_h_
