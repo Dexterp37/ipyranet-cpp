@@ -322,7 +322,7 @@ void IPyraNet<NetType>::initGradientStorage() {
 
                 layersGradient[l].weightsGrad[u].resize(neurons);
 
-                for (unsigned int v = 0; v < neurons; ++v) {
+                for (int v = 0; v < neurons; ++v) {
                     layersGradient[l].weightsGrad[u][v] = 0.0;
                 }
             }
@@ -330,7 +330,7 @@ void IPyraNet<NetType>::initGradientStorage() {
             // now enough room for the biases    
             layersGradient[l].biasesGrad.resize(neurons);
 
-            for (unsigned int u = 0; u < neurons; ++u) {
+            for (int u = 0; u < neurons; ++u) {
                 layersGradient[l].biasesGrad[u].resize(1);
                 layersGradient[l].biasesGrad[u][0] = 0.0;
             }
@@ -506,14 +506,66 @@ void IPyraNet<NetType>::computeGradient() {
 
     // compute the error gradient for 1D layers
     int currentLayer = layers.size() - 1;
-    int location[2] = {0, 0};
+    
+    // get parent size
+    int parentDims = 0;
+    int parentSize[2];
 
     for (currentLayer; currentLayer > 0; --currentLayer) {
 
         if (layers[currentLayer]->getLayerType() != IPyraNetLayer<NetType>::Layer1D)
             break;
+        
+        // parent layer pointer
+        IPyraNetLayer<NetType>* parent = layers[currentLayer]->getParentLayer();
+        parentDims = parent->getDimensions();
+        parent->getSize(parentSize);
 
-        //layersDeltas[currentLayer].deltas[n][0] 
+        // current layer size
+        int neurons = 0;
+        layers[currentLayer]->getSize(&neurons);
+
+        // compute the biases gradient
+        for (int n = 0; n < neurons; ++n)
+            layersGradient[currentLayer].biasesGrad[n][0] += layersDeltas[currentLayer].deltas[n][0];
+
+        // compute the weights gradient
+        if (parentDims == 2) {
+
+            // 2D connecting to 1D
+            int parentNeuronLoc[2]; 
+            int m = 0; // as defined in (21)
+
+            for (int m_u = 0; m_u < parentSize[0]; ++m_u) {
+
+                parentNeuronLoc[0] = m_u;
+
+                for (int m_v = 0; m_v < parentSize[1]; ++m_v) {
+                    parentNeuronLoc[1] = m_v;
+
+                    NetType parentNeuronOutput = parent->getNeuronOutput(2, parentNeuronLoc);
+
+                    m = (m_v * parentSize[1]) + m_u;
+
+                    // update the gradient
+                    for (int n = 0; n < neurons; ++n)
+                        layersGradient[currentLayer].weightsGrad[m][n] += layersDeltas[currentLayer].deltas[n][0] * parentNeuronOutput;
+
+                }
+            }
+
+        } else if (parentDims == 1) {
+
+            // 1D connecting to 1D
+            for (int m = 0; m < parentSize[0]; ++m) {
+                NetType parentNeuronOutput = parent->getNeuronOutput(2, &m);
+
+                // update the gradient
+                for (int n = 0; n < neurons; ++n)
+                    layersGradient[currentLayer].weightsGrad[m][n] += layersDeltas[currentLayer].deltas[n][0] * parentNeuronOutput;
+
+            }
+        }
     }
 
     // TODO: compute the error gradient for 2D layers

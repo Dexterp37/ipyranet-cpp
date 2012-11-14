@@ -112,13 +112,11 @@ OutType IPyraNet1DLayer<OutType>::getWeightedSumInput(int dimensions, int* neuro
 
     // we can connect to both 1D and 2D layers so handle both
     // cases
-    int inputNeurons = 0; 
     if (parentDims == 2) {
         // This 1-D layer is connected to a 2-D layer.
 
         // weighted sum of each parent neuron connecting to this level's 
         // output neuron
-        inputNeurons = parentSize[0] * parentSize[1];
         int parentNeuronLoc[2]; 
         int parentNeuronIndex = 0;
 
@@ -138,9 +136,7 @@ OutType IPyraNet1DLayer<OutType>::getWeightedSumInput(int dimensions, int* neuro
         }
     } else {
         // This 1-D layer is connected to a 1-D layer.
-        inputNeurons = parentSize[0];
-
-        for (int m = 0; m < inputNeurons; ++m) {
+        for (int m = 0; m < parentSize[0]; ++m) {
             OutType parentNeuronOutput = parent->getNeuronOutput(2, &m);
 
             OutType connectionWeight = weights[m][n];
