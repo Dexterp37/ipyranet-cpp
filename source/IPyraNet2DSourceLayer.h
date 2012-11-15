@@ -25,6 +25,9 @@ public:
     int getDimensions() const;
     void getSize(int* size);
     OutType getNeuronWeight(int dimensions, int* neuronLocation) { return 0; }
+    void setNeuronWeight(int dimensions, int* neuronLocation, OutType value) { };
+    OutType getNeuronBias(int dimensions, int* neuronLocation) { return 0; }
+    void setNeuronBias(int dimensions, int* neuronLocation, OutType value) { };
 
     void saveToXML(pugi::xml_node& node);
     void loadFromXML(pugi::xml_node& node);

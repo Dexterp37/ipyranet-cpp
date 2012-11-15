@@ -36,6 +36,10 @@ public:
     virtual void getSize(int* size) = 0;
 
     virtual OutType getNeuronWeight(int dimensions, int* neuronLocation) = 0;
+    virtual void setNeuronWeight(int dimensions, int* neuronLocation, OutType value) = 0;
+
+    virtual OutType getNeuronBias(int dimensions, int* neuronLocation) = 0;
+    virtual void setNeuronBias(int dimensions, int* neuronLocation, OutType value) = 0;
 
     virtual void setParentLayer(IPyraNetLayer<OutType>* parent, bool init = true) { parentLayer = parent; }
     IPyraNetLayer<OutType>* getParentLayer() { return parentLayer; }

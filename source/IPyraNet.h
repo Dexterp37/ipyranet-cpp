@@ -36,6 +36,8 @@ public:
     int getTrainingEpochs() const;
     void setTrainingTechnique(TrainingTechnique technique);
     //TrainingTechnique getTrainingTechnique() const;
+    void setLearningRate(NetType rate);
+    NetType getLearningRate() const;
 
     void train(const std::string&  path);
 
@@ -65,6 +67,7 @@ private:
     void backpropagation(const std::vector<NetType>& errorSignal);
     void computeErrorSensitivities(const std::vector<NetType>& errorSignal);
     void computeGradient();
+    void updateWeightsAndBiases();
 };
 
 #endif // _IPyraNet_h_

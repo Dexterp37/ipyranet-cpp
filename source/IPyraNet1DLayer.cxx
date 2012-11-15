@@ -74,6 +74,37 @@ OutType IPyraNet1DLayer<OutType>::getNeuronWeight(int dimensions, int* neuronLoc
 }
 
 template<class OutType>
+void IPyraNet1DLayer<OutType>::setNeuronWeight(int dimensions, int* neuronLocation, OutType value) {
+    // weights are "per connection", so there is a weight for each neuron in the
+    // previous layer connecting to a neuron in this layer.
+    assert (dimensions == 2);
+    assert (neuronLocation != NULL);
+    assert (neuronLocation[0] >= 0 && neuronLocation[1] >= 0);
+
+    weights[neuronLocation[0]][neuronLocation[1]] = value;
+}
+
+template<class OutType>
+OutType IPyraNet1DLayer<OutType>::getNeuronBias(int dimensions, int* neuronLocation) {
+    // one bias per euron on this layer
+    assert (dimensions == 1);
+    assert (neuronLocation != NULL);
+    assert (neuronLocation[0] >= 0);
+
+    return biases[neuronLocation[0]];
+}
+
+template<class OutType>
+void IPyraNet1DLayer<OutType>::setNeuronBias(int dimensions, int* neuronLocation, OutType value) {
+    // one bias per euron on this layer
+    assert (dimensions == 1);
+    assert (neuronLocation != NULL);
+    assert (neuronLocation[0] >= 0);
+
+    biases[neuronLocation[0]] = value;
+}
+
+template<class OutType>
 void IPyraNet1DLayer<OutType>::setParentLayer(IPyraNetLayer<OutType>* parent, bool init) { 
     
     assert(parent != NULL);

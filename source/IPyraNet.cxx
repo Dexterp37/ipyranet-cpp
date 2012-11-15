@@ -14,7 +14,8 @@
 template <class NetType>
 IPyraNet<NetType>::IPyraNet() 
     : trainingEpochs(0),
-    trainingTechnique(Unknown) 
+    learningRate(0.0),
+    trainingTechnique(Unknown)
 {
     layers.clear();
 }
@@ -136,6 +137,7 @@ void IPyraNet<NetType>::train(const std::string& path) {
             errorSignal[k] = faceDesired[k] - outputs[k];
 
         backpropagation(errorSignal);
+        updateWeightsAndBiases();
 
         std::cout << " OUT [" << outputs[0] << " | " << outputs[1] << "] ";
         std::cout << " Err [" << errorSignal[0] << " | " << errorSignal[1] << "]" << std::endl;
@@ -211,6 +213,16 @@ template <class NetType>
 IPyraNet<NetType>::TrainingTechnique IPyraNet<NetType>::getTrainingTechnique() const {
     return trainingTechnique;
 }*/
+
+template <class NetType>
+void IPyraNet<NetType>::setLearningRate(NetType rate) {
+    learningRate = rate;
+}
+
+template <class NetType>
+NetType IPyraNet<NetType>::getLearningRate() const {
+    return learningRate;
+}
 
 template <class NetType>
 void IPyraNet<NetType>::appendLayerNoInit(IPyraNetLayer<NetType>* newLayer) {
@@ -473,9 +485,9 @@ void IPyraNet<NetType>::computeErrorSensitivities(const std::vector<NetType>& er
 
                 // compute bounds as in (19) and (20)
                 iLow = ceil((u - receptive) / gap) + 1;
-                iHigh = floor((u - 1) / gap) + 1;
+                iHigh = floor((u - 1) / gap);// + 1; // TODO check as it is +1 on the paper
                 jLow = ceil((v - receptive) / gap) + 1;
-                jHigh = floor((v - 1) / gap) + 1;
+                jHigh = floor((v - 1) / gap); // + 1; // TODO check as itis +1 on the paper
 
                 for (int i = iLow; i < iHigh; ++i) {
                     for (int j = jLow; j < jHigh; ++j) {
@@ -616,9 +628,9 @@ void IPyraNet<NetType>::computeGradient() {
                 
                 // compute uLow-uHigh and vLow-vHigh
                 uLow = ceil((i - receptive) / gap) + 1;
-                uHigh = floor((i - 1) / gap) + 1;
+                uHigh = floor((i - 1) / gap);// + 1; // TODO check
                 vLow = ceil((j - receptive) / gap) + 1;
-                vHigh = floor((j - 1) / gap) + 1;
+                vHigh = floor((j - 1) / gap); // + 1; // TODO check
                 
                 NetType summation = 0;
 
@@ -632,7 +644,106 @@ void IPyraNet<NetType>::computeGradient() {
             }
         }
     }
+}
 
+template <class NetType>
+void IPyraNet<NetType>::updateWeightsAndBiases() {
+    
+    // get the size of source layer
+    int parentSize[2];
+    int parentDims = 2;
+    int location[2];
+
+    layers[0]->getSize(parentSize);
+
+    for (unsigned int l = 1; l < layers.size(); ++l) {
+
+        // 2D layer
+        if (layers[l]->getDimensions() == 2) {
+
+            // we have as many weights as the number of neurons in last layer.
+            for (int u = 0; u < parentSize[0]; ++u) {
+                location[0] = u;
+
+                for (int v = 0; v < parentSize[1]; ++v) {
+                    location[1] = v;
+
+                    NetType oldWeight = layers[l]->getNeuronWeight(2, location);
+
+                    // compute the new weight as OLD - LearningRate * Gradient
+                    NetType newWeight = oldWeight - learningRate * layersGradient[l].weightsGrad[u][v];
+
+                    layers[l]->setNeuronWeight(2, location, newWeight);
+                }
+            }
+
+            // now update the biases. A bias for each neuron of current layer.
+            // save it in "parentSize", so that it is already updated.
+            layers[l]->getSize(parentSize);
+
+            for (int u = 0; u < parentSize[0]; ++u) {
+                location[0] = u;
+
+                for (int v = 0; v < parentSize[1]; ++v) {
+                    location[1] = v;
+
+                    NetType oldBias = layers[l]->getNeuronBias(2, location);
+
+                    // compute the new weight as OLD - LearningRate * Gradient
+                    NetType newBias = oldBias - learningRate * layersGradient[l].biasesGrad[u][v];
+
+                    layers[l]->setNeuronBias(2, location, newBias);
+                }
+            }
+        } else {    // 1D layer
+                
+            // we can connect to both 1D and 2D layers so handle both
+            // cases
+            int inputNeurons = 0; 
+            if (parentDims == 2) {
+                inputNeurons = parentSize[0] * parentSize[1];
+            } else
+                inputNeurons = parentSize[0];
+
+            
+            int neurons = 0;
+            layers[l]->getSize(&neurons);
+
+            // we have a weight for each connection going from
+            // each input to every neuron in this layer.
+            for (int u = 0; u < inputNeurons; ++u) {
+                location[0] = u;
+
+                for (int v = 0; v < neurons; ++v) {
+                    location[1] = v;
+
+                    NetType oldWeight = layers[l]->getNeuronWeight(2, location);
+
+                    // compute the new bias as OLD - LearningRate * Gradient
+                    NetType newWeight = oldWeight - learningRate * layersGradient[l].weightsGrad[u][v];
+
+                    layers[l]->setNeuronWeight(2, location, newWeight);
+                }
+            }
+
+            // now update the biases
+            for (int u = 0; u < neurons; ++u) {
+
+                location[0] = u;
+
+                NetType oldBias = layers[l]->getNeuronBias(1, location);
+
+                // compute the new bias as OLD - LearningRate * Gradient
+                NetType newBias = oldBias - learningRate * layersGradient[l].biasesGrad[u][0];
+
+                layers[l]->setNeuronBias(1, location, newBias);
+            }
+        }
+
+        // update parent dims
+        layers[l]->getSize(parentSize);
+        parentDims = layers[l]->getDimensions();
+    }
 }
 
 // explicit instantiations
