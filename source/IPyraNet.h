@@ -38,6 +38,8 @@ public:
     //TrainingTechnique getTrainingTechnique() const;
     void setLearningRate(NetType rate);
     NetType getLearningRate() const;
+    void setBatchMode(bool batch);
+    bool getBatchMode() const;
 
     void train(const std::string&  path);
 
@@ -58,6 +60,7 @@ private:
 	int trainingEpochs;
     NetType learningRate;
     TrainingTechnique trainingTechnique;
+    bool batchMode;
 
     std::vector<IPyraNetLayer<NetType>*> layers;
 

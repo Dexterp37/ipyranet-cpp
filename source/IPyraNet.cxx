@@ -15,7 +15,8 @@ template <class NetType>
 IPyraNet<NetType>::IPyraNet() 
     : trainingEpochs(0),
     learningRate(0.0),
-    trainingTechnique(Unknown)
+    trainingTechnique(Unknown),
+    batchMode(false)
 {
     layers.clear();
 }
@@ -88,62 +89,132 @@ bool IPyraNet<NetType>::loadFromXML(const std::string& fileName) {
 template <class NetType>
 void IPyraNet<NetType>::train(const std::string& path) {
     
+    // build an array with data and the desired output vector
+    struct Sample {
+        std::string filePath;
+        NetType desired[2];
+    };
+
+    std::vector<Sample> samples;
+
     std::string facePath(path);
     facePath.append("/face");
-    NetType faceDesired[2] = { 1.0, 0.0 };
 
     std::string nonFacePath(path);
     nonFacePath.append("/non-face");
-    NetType nonFaceDesired[2] = { 0.0, 1.0 };
-
-    DIR *faceDir = opendir (facePath.c_str());
-    if (faceDir == NULL) 
-        return;
 
     struct dirent *ent;
 
-    initDeltaStorage();
-    initGradientStorage();
+    // fill the array with the "faces"
+    std::cout << "Populating samples database...";
 
-    // iterate through files
-    IPyraNet2DSourceLayer<NetType>* sourceLayer = ((IPyraNet2DSourceLayer<NetType>*)layers[0]);
+    DIR* faceDir = opendir (facePath.c_str());
+    if (faceDir == NULL) 
+        return;
+
     while ((ent = readdir (faceDir)) != NULL) {
 
         // skip "." and ".."
         if (ent->d_name[0] == '.')
             continue;
 
-        //printf ("%s\n", ent->d_name);
-        std::cout << "Processing " << ent->d_name;
+        // extract the full filename and fill the data structure
+        Sample sample;
+        sample.desired[0] = 1.0;
+        sample.desired[1] = 0.0;
+        sample.filePath = facePath;
+        sample.filePath.append("/");
+        sample.filePath.append(ent->d_name);
 
-        // extract the full filename
-        std::string fullPath(facePath);
-        fullPath.append("/");
-        fullPath.append(ent->d_name);
-
-        // process this image and compute the output
-        if (!sourceLayer->load(fullPath.c_str())) {
-            std::cout << "ERROR!" << std::endl;
-            continue;
-        }
-
-        // compute network output
-        std::vector<NetType> outputs;
-        getOutput(outputs);
-
-        // compute the error signal
-        std::vector<NetType> errorSignal(outputs.size());
-        for (size_t k = 0; k < errorSignal.size(); ++k)
-            errorSignal[k] = faceDesired[k] - outputs[k];
-
-        backpropagation(errorSignal);
-        updateWeightsAndBiases();
-
-        std::cout << " OUT [" << outputs[0] << " | " << outputs[1] << "] ";
-        std::cout << " Err [" << errorSignal[0] << " | " << errorSignal[1] << "]" << std::endl;
+        // push into the array
+        samples.push_back(sample);
     }
 
-    closedir (faceDir);
+    closedir (faceDir);    
+    
+    // fill the array with the "NON faces"
+    DIR* nonFaceDir = opendir (nonFacePath.c_str());
+    if (nonFaceDir == NULL) 
+        return;
+
+    while ((ent = readdir (nonFaceDir)) != NULL) {
+
+        // skip "." and ".."
+        if (ent->d_name[0] == '.')
+            continue;
+
+        // extract the full filename and fill the data structure
+        Sample sample;
+        sample.desired[0] = 0.0;
+        sample.desired[1] = 1.0;
+        sample.filePath = nonFacePath;
+        sample.filePath.append("/");
+        sample.filePath.append(ent->d_name);
+
+        // push into the array
+        samples.push_back(sample);
+    }
+
+    closedir (nonFaceDir);
+
+    std::cout << "\t DONE" << std::endl;
+
+    // initialize storage memory
+    initDeltaStorage();
+    initGradientStorage();
+
+    size_t numSamples = samples.size();
+
+    // now train the neural network for multiple epochs
+    IPyraNet2DSourceLayer<NetType>* sourceLayer = ((IPyraNet2DSourceLayer<NetType>*)layers[0]);
+
+    for (int epoch = 0; epoch < trainingEpochs; ++epoch) {
+
+        // shuffle samples
+        std::cout << "Shuffling samples...";
+        std::random_shuffle(samples.begin(), samples.end());
+        std::cout << "\tDONE" << std::endl;
+
+        // train
+        for (size_t index = 0; index < numSamples; ++index) {
+
+            // get the sample
+            Sample sample = samples[index];
+
+            // process this image and compute the output
+            if (!sourceLayer->load(sample.filePath.c_str())) {
+                std::cout << "ERROR!" << std::endl;
+                continue;
+            }
+
+            // compute network output
+            std::vector<NetType> outputs;
+            getOutput(outputs);
+
+            // compute the error signal
+            std::vector<NetType> errorSignal(outputs.size());
+            for (size_t k = 0; k < errorSignal.size(); ++k)
+                errorSignal[k] = sample.desired[k] - outputs[k];
+
+            backpropagation(errorSignal);
+
+            // ok, we are in online mode, so update
+            if (!batchMode) {
+                updateWeightsAndBiases();
+                // resetDeltas?
+            }
+
+            std::cout << " OUT [" << outputs[0] << " | " << outputs[1] << "] ";
+            std::cout << " Err [" << errorSignal[0] << " | " << errorSignal[1] << "]" << std::endl;
+        }
+
+        // TODO:
+        if (batchMode) {
+            updateWeightsAndBiases();
+            // resetDeltas?
+        }
+
+    }
 }
 
 template <class NetType>
@@ -222,6 +293,16 @@ void IPyraNet<NetType>::setLearningRate(NetType rate) {
 template <class NetType>
 NetType IPyraNet<NetType>::getLearningRate() const {
     return learningRate;
+}
+
+template <class NetType>
+void IPyraNet<NetType>::setBatchMode(bool batch) {
+    batchMode = batch;
+}
+
+template <class NetType>
+bool IPyraNet<NetType>::getBatchMode() const {
+    return batchMode;
 }
 
 template <class NetType>
