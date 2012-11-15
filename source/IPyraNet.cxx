@@ -473,9 +473,9 @@ void IPyraNet<NetType>::computeErrorSensitivities(const std::vector<NetType>& er
 
                 // compute bounds as in (19) and (20)
                 iLow = ceil((u - receptive) / gap) + 1;
-                iHigh = floor((u /*- 1*/) / gap);
+                iHigh = floor((u - 1) / gap) + 1;
                 jLow = ceil((v - receptive) / gap) + 1;
-                jHigh = floor((v /* - 1*/) / gap);
+                jHigh = floor((v - 1) / gap) + 1;
 
                 for (int i = iLow; i < iHigh; ++i) {
                     for (int j = jLow; j < jHigh; ++j) {
@@ -568,7 +568,71 @@ void IPyraNet<NetType>::computeGradient() {
         }
     }
 
-    // TODO: compute the error gradient for 2D layers
+    // compute the error gradient for 2D layers
+    int receptive = 0;
+    int overlap = 0;
+    NetType gap = 0;
+
+    // uLow, uHight, vLow, vHigh
+    int uLow = 0, uHigh = 0, vLow = 0, vHigh = 0;
+
+    for (currentLayer; currentLayer > 0; --currentLayer) {
+
+        if (layers[currentLayer]->getLayerType() != IPyraNetLayer<NetType>::Layer2D)
+            break;
+
+        // current layer size
+        int currentSize[2];
+        layers[currentLayer]->getSize(currentSize);
+
+        // compute the biases gradient
+        for (int u = 0; u < currentSize[0]; ++u)
+            for (int v = 0; v < currentSize[1]; ++v)
+                layersGradient[currentLayer].biasesGrad[u][v] += layersDeltas[currentLayer].deltas[u][v];
+
+        // parent layer pointer
+        IPyraNetLayer<NetType>* parent = layers[currentLayer]->getParentLayer();
+        parentDims = parent->getDimensions();
+        parent->getSize(parentSize);
+
+        // cast to a layer 2d
+        IPyraNet2DLayer<NetType>* layer2D = (IPyraNet2DLayer<NetType>*)layers[currentLayer];
+
+        // get layer informations
+        receptive = layer2D->getReceptiveFieldSize();
+        overlap = layer2D->getOverlap();
+        gap = receptive - overlap;
+            
+        int parentNeuronLoc[2]; 
+
+        // compute weights gradient
+        for (int i = 0; i < parentSize[0]; ++i) {
+            parentNeuronLoc[0] = i;
+
+            for (int j = 0; j < parentSize[1]; ++j) {
+                parentNeuronLoc[1] = j;    
+                
+                NetType parentNeuronOutput = parent->getNeuronOutput(2, parentNeuronLoc);
+                
+                // compute uLow-uHigh and vLow-vHigh
+                uLow = ceil((i - receptive) / gap) + 1;
+                uHigh = floor((i - 1) / gap) + 1;
+                vLow = ceil((j - receptive) / gap) + 1;
+                vHigh = floor((j - 1) / gap) + 1;
+                
+                NetType summation = 0;
+
+                for (int u = uLow; u < uHigh; ++u) {
+                    for (int v = vLow; v < vHigh; ++v) {
+                        summation += layersDeltas[currentLayer].deltas[u][v];
+                    }
+                }
+
+                layersGradient[currentLayer].weightsGrad[i][j] += summation * parentNeuronOutput;
+            }
+        }
+    }
+
 }
 
 // explicit instantiations
