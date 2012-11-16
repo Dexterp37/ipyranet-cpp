@@ -565,14 +565,18 @@ void IPyraNet<NetType>::computeErrorSensitivities(const std::vector<NetType>& er
                 NetType summation = 0;
 
                 // compute bounds as in (19) and (20)
-                iLow = ceil((u - receptive) / gap) + 1;
+                iLow = ceil((u - receptive) / gap);// + 1;
                 iHigh = floor((u - 1) / gap);// + 1; // TODO check as it is +1 on the paper
-                jLow = ceil((v - receptive) / gap) + 1;
-                jHigh = floor((v - 1) / gap); // + 1; // TODO check as itis +1 on the paper
+                jLow = ceil((v - receptive) / gap);// + 1;
+                jHigh = floor((v - 1) / gap);// + 1; // TODO check as itis +1 on the paper
 
                 for (int i = iLow; i < iHigh; ++i) {
                     for (int j = jLow; j < jHigh; ++j) {
                         // double summation in (18), delta_i,j
+                        
+                        if (i < 0 || j < 0)
+                            continue;   // TODO: check? We've got an offset problem here!
+
                         summation += layersDeltas[currentLayer + 1].deltas[i][j];
                     }
                 }
