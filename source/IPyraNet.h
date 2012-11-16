@@ -70,6 +70,7 @@ private:
     void backpropagation(const std::vector<NetType>& errorSignal);
     void computeErrorSensitivities(const std::vector<NetType>& errorSignal);
     void computeGradient();
+    void resetGradient();
     void updateWeightsAndBiases();
 };
 

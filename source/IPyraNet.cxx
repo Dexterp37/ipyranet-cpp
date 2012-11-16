@@ -201,17 +201,16 @@ void IPyraNet<NetType>::train(const std::string& path) {
             // ok, we are in online mode, so update
             if (!batchMode) {
                 updateWeightsAndBiases();
-                // resetDeltas?
+                resetGradient();
             }
 
             std::cout << " OUT [" << outputs[0] << " | " << outputs[1] << "] ";
             std::cout << " Err [" << errorSignal[0] << " | " << errorSignal[1] << "]" << std::endl;
         }
 
-        // TODO:
         if (batchMode) {
             updateWeightsAndBiases();
-            // resetDeltas?
+            resetGradient();
         }
 
     }
@@ -729,6 +728,41 @@ void IPyraNet<NetType>::computeGradient() {
             }
         }
     }
+}
+
+template <class NetType>
+void IPyraNet<NetType>::resetGradient() {
+
+    size_t gradientsNum = layersGradient.size();
+
+    // zero out each gradient
+    for (size_t g = 0; g < gradientsNum; ++g) {
+
+        // zero weights
+        size_t u_max = layersGradient[g].weightsGrad.size();
+        size_t v_max = 0;
+
+        for (size_t u = 0; u < u_max; ++u) {
+            v_max = layersGradient[g].weightsGrad[u].size();
+
+            for (size_t v = 0; v < v_max; ++v) {
+                layersGradient[g].weightsGrad[u][v] = 0.0;
+            }
+        }
+    
+        // zero biases
+        u_max = layersGradient[g].biasesGrad.size();
+        v_max = 0;
+
+        for (size_t u = 0; u < u_max; ++u) {
+            v_max = layersGradient[g].biasesGrad[u].size();
+
+            for (size_t v = 0; v < v_max; ++v) {
+                layersGradient[g].biasesGrad[u][v] = 0.0;
+            }
+        }
+    }
+
 }
 
 template <class NetType>
