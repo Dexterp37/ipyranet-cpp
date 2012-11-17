@@ -64,6 +64,8 @@ private:
     TrainingTechnique trainingTechnique;
     bool batchMode;
 
+    bool verboseOutput;
+
     std::vector<IPyraNetLayer<NetType>*> layers;
 
     void appendLayerNoInit(IPyraNetLayer<NetType>* newLayer);

@@ -17,7 +17,8 @@ IPyraNet<NetType>::IPyraNet()
     learningRate(0.0),
     wantedError(0.0),
     trainingTechnique(Unknown),
-    batchMode(false)
+    batchMode(false),
+    verboseOutput(false)
 {
     layers.clear();
 }
@@ -172,6 +173,9 @@ void IPyraNet<NetType>::train(const std::string& path) {
 
     for (int epoch = 0; epoch < trainingEpochs; ++epoch) {
 
+        // reset the error counter for this epoch
+        errorCE = 0.0;
+
         // shuffle samples
         std::cout << "Shuffling samples...";
         std::random_shuffle(samples.begin(), samples.end());
@@ -213,9 +217,11 @@ void IPyraNet<NetType>::train(const std::string& path) {
                 resetGradient();
             }
 
-            std::cout << " D [" << sample.desired[0] << " | " << sample.desired[1] << "]";
-            std::cout << " OUT [" << outputs[0] << " | " << outputs[1] << "] ";
-            std::cout << " Err [" << errorSignal[0] << " | " << errorSignal[1] << "]" << std::endl;
+            if (verboseOutput) {
+                std::cout << " D [" << sample.desired[0] << " | " << sample.desired[1] << "]";
+                std::cout << " OUT [" << outputs[0] << " | " << outputs[1] << "] ";
+                std::cout << " Err [" << errorSignal[0] << " | " << errorSignal[1] << "]" << std::endl;
+            }
         }
 
         if (batchMode) {
