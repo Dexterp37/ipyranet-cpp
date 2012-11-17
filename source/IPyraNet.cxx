@@ -859,29 +859,42 @@ void IPyraNet<NetType>::computeGradient() {
         int parentNeuronLoc[2]; 
 
         // compute weights gradient
-        for (int i = 0; i < parentSize[0]; ++i) {
-            parentNeuronLoc[0] = i;
+        for (int i = 1; i <= parentSize[0]; ++i) {
+            parentNeuronLoc[0] = i - 1;
 
-            for (int j = 0; j < parentSize[1]; ++j) {
-                parentNeuronLoc[1] = j;    
+            for (int j = 1; j <= parentSize[1]; ++j) {
+                parentNeuronLoc[1] = j - 1;    
                 
                 NetType parentNeuronOutput = parent->getNeuronOutput(2, parentNeuronLoc);
                 
                 // compute uLow-uHigh and vLow-vHigh
                 uLow = ceil((i - receptive) / gap) + 1;
-                uHigh = floor((i - 1) / gap);// + 1; // TODO check
+                uHigh = floor((i - 1) / gap) + 1;
                 vLow = ceil((j - receptive) / gap) + 1;
-                vHigh = floor((j - 1) / gap); // + 1; // TODO check
+                vHigh = floor((j - 1) / gap) + 1;
                 
                 NetType summation = 0;
+                
+                int uvMinusOne[2];
 
-                for (int u = uLow; u < uHigh; ++u) {
-                    for (int v = vLow; v < vHigh; ++v) {
-                        summation += layersDeltas[currentLayer].deltas[u][v];
+                for (int u = uLow; u <= uHigh; ++u) {
+                    uvMinusOne[0] = u - 1;
+
+                    for (int v = vLow; v <= vHigh; ++v) {
+                        uvMinusOne[1] = v - 1;
+
+                        if (uvMinusOne[0] < 0 || uvMinusOne[1] < 0)
+                            continue;
+
+                        if (uvMinusOne[0] >= layersDeltas[currentLayer].deltas.size() ||
+                            uvMinusOne[1] >= layersDeltas[currentLayer].deltas[uvMinusOne[0]].size())
+                            continue;
+
+                        summation += layersDeltas[currentLayer].deltas[uvMinusOne[0]][uvMinusOne[1]];
                     }
                 }
 
-                layersGradient[currentLayer].weightsGrad[i][j] += summation * parentNeuronOutput;
+                layersGradient[currentLayer].weightsGrad[parentNeuronLoc[0]][parentNeuronLoc[1]] += summation * parentNeuronOutput;
             }
         }
     }
