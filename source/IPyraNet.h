@@ -60,6 +60,7 @@ private:
 
 	int trainingEpochs;
     NetType learningRate;
+    NetType wantedError;
     TrainingTechnique trainingTechnique;
     bool batchMode;
 

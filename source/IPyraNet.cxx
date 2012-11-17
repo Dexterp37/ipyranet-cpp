@@ -15,6 +15,7 @@ template <class NetType>
 IPyraNet<NetType>::IPyraNet() 
     : trainingEpochs(0),
     learningRate(0.0),
+    wantedError(0.0),
     trainingTechnique(Unknown),
     batchMode(false)
 {
@@ -167,6 +168,7 @@ void IPyraNet<NetType>::train(const std::string& path) {
 
     // now train the neural network for multiple epochs
     IPyraNet2DSourceLayer<NetType>* sourceLayer = ((IPyraNet2DSourceLayer<NetType>*)layers[0]);
+    NetType errorCE = 0.0;
 
     for (int epoch = 0; epoch < trainingEpochs; ++epoch) {
 
@@ -195,6 +197,13 @@ void IPyraNet<NetType>::train(const std::string& path) {
             std::vector<NetType> errorSignal(outputs.size());
             computeErrorSignal(outputs, sample.desired, errorSignal);
 
+            // compute the error function (10)
+            for (size_t n = 0; n < outputs.size(); ++n) {
+                // fugly but works, errorSignal = pn - d so p = errorSignal + d
+                NetType pn = errorSignal[n] + sample.desired[n];
+                errorCE += sample.desired[n] * log(pn);
+            }
+
             // run the backpropagation algorithm
             backpropagation(errorSignal);
 
@@ -214,6 +223,15 @@ void IPyraNet<NetType>::train(const std::string& path) {
             resetGradient();
         }
 
+        // (10) requires the minus sign, so swap signs :)
+        errorCE = -errorCE;
+        std::cout << "Value of the error function for epoch " << epoch << " is " << errorCE << std::endl;
+
+        if (errorCE < wantedError) {
+            // error is under our wanted threshold. Exit from the loop
+            std::cout << "Training stopped. Error is " << errorCE << " and the wanted error is " << wantedError << std::endl;
+            return;
+        }
     }
 }
 
@@ -911,7 +929,7 @@ void IPyraNet<NetType>::computeErrorSignal(const std::vector<NetType>& output, c
 
     // finally compute the error signal
     for (size_t e = 0; e < output.size(); ++e)
-        error[e] = exp(output[e]) / expSum - desired[e];
+        error[e] = (exp(output[e]) / expSum) - desired[e];
 }
 
 template <class NetType>
