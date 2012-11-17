@@ -14,6 +14,7 @@ class IPyraNet2DSourceLayer : public IPyraNetLayer<OutType> {
 public:
     IPyraNet2DSourceLayer();
     IPyraNet2DSourceLayer(const std::string& fileName);
+    IPyraNet2DSourceLayer(int initialWidth, int initialHeight);
     virtual ~IPyraNet2DSourceLayer();
     
     LayerType getLayerType() const { return Source; }

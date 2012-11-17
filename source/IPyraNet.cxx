@@ -9,6 +9,7 @@
 #include "IPyraNet2DLayer.h"
 #include "IPyraNetSigmoidFunction.h"
 #include <assert.h>
+#include <iostream>
 #include "../3rdParties/dirent-1.12.1/dirent.h" // this is NOT cross platform!
 
 template <class NetType>
@@ -85,8 +86,6 @@ bool IPyraNet<NetType>::loadFromXML(const std::string& fileName) {
 
     return result;
 }
-
-#include <iostream> // removeme
 
 template <class NetType>
 void IPyraNet<NetType>::train(const std::string& path) {

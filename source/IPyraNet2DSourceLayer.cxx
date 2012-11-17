@@ -26,7 +26,8 @@ IPyraNet2DSourceLayer<OutType>::~IPyraNet2DSourceLayer() {
 template<class OutType>
 bool IPyraNet2DSourceLayer<OutType>::load(const std::string& fileName) {
 
-    source = cv::imread(fileName);
+    cv::Mat original = cv::imread(fileName);
+    original.convertTo(source, CV_64F, 1.0 / 255.0);
 
     if (!source.data)
         return false;
@@ -42,7 +43,8 @@ OutType IPyraNet2DSourceLayer<OutType>::getNeuronOutput(int dimensions, int* neu
     assert (neuronLocation != NULL);
     assert (neuronLocation[0] >= 0 && neuronLocation[1] >= 0);
 
-    return static_cast<OutType>(source.at<unsigned char>(neuronLocation[1], neuronLocation[0]));
+    return static_cast<OutType>(source.at<double>(neuronLocation[1], neuronLocation[0]));
+//    return static_cast<OutType>(source.at<unsigned char>(neuronLocation[1], neuronLocation[0]));
 }
 
 template<class OutType>
@@ -72,7 +74,11 @@ void IPyraNet2DSourceLayer<OutType>::saveToXML(pugi::xml_node& node) {
 
 template<class OutType>
 void IPyraNet2DSourceLayer<OutType>::loadFromXML(pugi::xml_node& node) {
+    
+    int initialWidth = node.attribute("width").as_int();
+    int initialHeight = node.attribute("height").as_int();
 
+    source.create(initialHeight, initialWidth, CV_8U);
 }
 
 // explicit instantiations
