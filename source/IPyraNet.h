@@ -42,6 +42,7 @@ public:
     bool getBatchMode() const;
 
     void train(const std::string&  path);
+    void test(const std::string&  path);
 
 private:    
     

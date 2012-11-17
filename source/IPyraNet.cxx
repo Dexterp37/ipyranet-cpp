@@ -218,6 +218,127 @@ void IPyraNet<NetType>::train(const std::string& path) {
 }
 
 template <class NetType>
+void IPyraNet<NetType>::test(const std::string& path) {
+    
+    // build an array with data and the desired output vector
+    struct Sample {
+        std::string filePath;
+        NetType desired[2];
+    };
+
+    std::vector<Sample> samples;
+
+    std::string facePath(path);
+    facePath.append("/face");
+
+    std::string nonFacePath(path);
+    nonFacePath.append("/non-face");
+
+    struct dirent *ent;
+
+    // fill the array with the "faces"
+    std::cout << "Populating test database...";
+
+    DIR* faceDir = opendir (facePath.c_str());
+    if (faceDir == NULL) 
+        return;
+
+    int faces = 0;
+    int nonFaces = 0;
+
+    while ((ent = readdir (faceDir)) != NULL) {
+
+        // skip "." and ".."
+        if (ent->d_name[0] == '.')
+            continue;
+
+        // extract the full filename and fill the data structure
+        Sample sample;
+        sample.desired[0] = 1.0;
+        sample.desired[1] = 0.0;
+        sample.filePath = facePath;
+        sample.filePath.append("/");
+        sample.filePath.append(ent->d_name);
+
+        // push into the array
+        samples.push_back(sample);
+
+        ++faces;
+    }
+
+    closedir (faceDir);    
+    
+    // fill the array with the "NON faces"
+    DIR* nonFaceDir = opendir (nonFacePath.c_str());
+    if (nonFaceDir == NULL) 
+        return;
+
+    while ((ent = readdir (nonFaceDir)) != NULL) {
+
+        // skip "." and ".."
+        if (ent->d_name[0] == '.')
+            continue;
+
+        // extract the full filename and fill the data structure
+        Sample sample;
+        sample.desired[0] = 0.0;
+        sample.desired[1] = 1.0;
+        sample.filePath = nonFacePath;
+        sample.filePath.append("/");
+        sample.filePath.append(ent->d_name);
+
+        // push into the array
+        samples.push_back(sample);
+
+        ++nonFaces;
+    }
+
+    closedir (nonFaceDir);
+
+    std::cout << "\t DONE" << std::endl;
+
+    size_t numSamples = samples.size();
+    int faceConfusionMatrix[2][2] = {0, 0, 0, 0};
+
+    // now train the neural network for multiple epochs
+    IPyraNet2DSourceLayer<NetType>* sourceLayer = ((IPyraNet2DSourceLayer<NetType>*)layers[0]);
+
+    // test
+    for (size_t index = 0; index < numSamples; ++index) {
+
+        // get the sample
+        Sample sample = samples[index];
+
+        // process this image and compute the output
+        if (!sourceLayer->load(sample.filePath.c_str())) {
+            std::cout << "ERROR!" << std::endl;
+            continue;
+        }
+
+        // compute network output
+        std::vector<NetType> outputs;
+        getOutput(outputs);
+
+        bool classifiedAsFace = outputs[0] > outputs[1];
+        bool desiredFace = sample.desired[0] > sample.desired[1]; 
+        bool correctlyClassified = (classifiedAsFace && desiredFace) || (!classifiedAsFace && !desiredFace);
+
+        // save some stats
+        int inputIndex = desiredFace ? 0 : 1;
+        int outputIndex = classifiedAsFace ? 0 : 1;
+        faceConfusionMatrix[inputIndex][outputIndex] += 1;
+    }
+
+    // print the stats
+    std::cout << "Train database has " << faces << " faces and " << nonFaces << " non faces" << std::endl;
+    std::cout << "Confusion matrix" << std::endl;
+    std::cout << "\tF\t\tNF" << std::endl;
+    std::cout << "F\t" << faceConfusionMatrix[0][0] << "\t\t" << faceConfusionMatrix[1][0] << std::endl;
+    std::cout << "NF\t" << faceConfusionMatrix[0][1] << "\t\t" << faceConfusionMatrix[1][1] << std::endl;
+    //std::cout << " Err [" << errorSignal[0] << " | " << errorSignal[1] << "]" << std::endl;
+}
+
+template <class NetType>
 void IPyraNet<NetType>::appendLayer(IPyraNetLayer<NetType>* newLayer) {
     
     if (newLayer == NULL)
