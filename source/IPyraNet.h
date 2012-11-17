@@ -71,6 +71,7 @@ private:
     void computeErrorSensitivities(const std::vector<NetType>& errorSignal);
     void computeGradient();
     void resetGradient();
+    void computeErrorSignal(const std::vector<NetType>& output, const NetType* desired, std::vector<NetType>& error);
     void updateWeightsAndBiases();
 };
 

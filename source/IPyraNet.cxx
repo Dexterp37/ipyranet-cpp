@@ -193,9 +193,9 @@ void IPyraNet<NetType>::train(const std::string& path) {
 
             // compute the error signal
             std::vector<NetType> errorSignal(outputs.size());
-            for (size_t k = 0; k < errorSignal.size(); ++k)
-                errorSignal[k] = sample.desired[k] - outputs[k];
+            computeErrorSignal(outputs, sample.desired, errorSignal);
 
+            // run the backpropagation algorithm
             backpropagation(errorSignal);
 
             // ok, we are in online mode, so update
@@ -776,6 +776,21 @@ void IPyraNet<NetType>::resetGradient() {
         }
     }
 
+}
+
+template <class NetType>
+void IPyraNet<NetType>::computeErrorSignal(const std::vector<NetType>& output, const NetType* desired, std::vector<NetType>& error) {
+    
+    assert(error.size() == output.size());
+
+    // compute the quote
+    NetType expSum = 0.0;
+    for (size_t i = 0; i < output.size(); ++i)
+        expSum += exp(output[i]);
+
+    // finally compute the error signal
+    for (size_t e = 0; e < output.size(); ++e)
+        error[e] = exp(output[e]) / expSum - desired[e];
 }
 
 template <class NetType>
