@@ -204,6 +204,7 @@ void IPyraNet<NetType>::train(const std::string& path) {
                 resetGradient();
             }
 
+            std::cout << " D [" << sample.desired[0] << " | " << sample.desired[1] << "]";
             std::cout << " OUT [" << outputs[0] << " | " << outputs[1] << "] ";
             std::cout << " Err [" << errorSignal[0] << " | " << errorSignal[1] << "]" << std::endl;
         }
@@ -543,7 +544,7 @@ void IPyraNet<NetType>::computeErrorSensitivities(const std::vector<NetType>& er
             continue;
         }
 
-        // other 2D pyramidal layer
+        // other 2D pyramidal layer (18)
         layers[currentLayer]->getSize(outputSize);
 
         IPyraNet2DLayer<NetType>* nextLayer2D = (IPyraNet2DLayer<NetType>*)layers[currentLayer + 1];
@@ -555,38 +556,50 @@ void IPyraNet<NetType>::computeErrorSensitivities(const std::vector<NetType>& er
         // iLow, iHight, jLow, jHigh
         int iLow = 0, iHigh = 0, jLow = 0, jHigh = 0;
 
-        for (int u = 0; u < outputSize[0]; ++u) {
-            location[0] = u;
+        // indices in (18) go from 1 to n
+        for (int u = 1; u <= outputSize[0]; ++u) {
+            location[0] = u - 1;
 
-            for (int v = 0; v < outputSize[1]; ++v) {
+            for (int v = 1; v <= outputSize[1]; ++v) {
+                location[1] = v - 1;
 
                 // compute the inner summation of (18) in the paper
                 NetType summation = 0;
 
                 // compute bounds as in (19) and (20)
-                iLow = ceil((u - receptive) / gap);// + 1;
-                iHigh = floor((u - 1) / gap);// + 1; // TODO check as it is +1 on the paper
-                jLow = ceil((v - receptive) / gap);// + 1;
-                jHigh = floor((v - 1) / gap);// + 1; // TODO check as itis +1 on the paper
+                iLow = ceil((u - receptive) / gap) + 1;
+                iHigh = floor((u - 1) / gap) + 1;
+                jLow = ceil((v - receptive) / gap) + 1;
+                jHigh = floor((v - 1) / gap) + 1;
 
-                for (int i = iLow; i < iHigh; ++i) {
-                    for (int j = jLow; j < jHigh; ++j) {
+                int ijMinusOne[2];
+
+                for (int i = iLow; i <= iHigh; ++i) {
+                    
+                    ijMinusOne[0] = i - 1;
+
+                    for (int j = jLow; j <= jHigh; ++j) {
+                    
+                        ijMinusOne[1] = j - 1;
+
                         // double summation in (18), delta_i,j
                         
-                        if (i < 0 || j < 0)
-                            continue;   // TODO: check? We've got an offset problem here!
+                        if (ijMinusOne[0] < 0 || ijMinusOne[1] < 0)
+                            continue;
 
-                        summation += layersDeltas[currentLayer + 1].deltas[i][j];
+                        if (ijMinusOne[0] >= layersDeltas[currentLayer + 1].deltas.size() ||
+                            ijMinusOne[1] >= layersDeltas[currentLayer + 1].deltas[ijMinusOne[0]].size())
+                            continue;
+
+                        summation += layersDeltas[currentLayer + 1].deltas[ijMinusOne[0]][ijMinusOne[1]];
                     }
                 }
 
                 // multiply the summation by the weight u,v
                 summation *= layers[currentLayer + 1]->getNeuronWeight(2, location);
 
-                // get error sensitivity for neuron u,v
-                location[1] = v;
-
-                layersDeltas[currentLayer].deltas[u][v] = layers[currentLayer]->getErrorSensitivity(2, location, summation);
+                // get error sensitivity for neuron u,v (consider indices offset!)
+                layersDeltas[currentLayer].deltas[location[0]][location[1]] = layers[currentLayer]->getErrorSensitivity(2, location, summation);
             }
         }
 

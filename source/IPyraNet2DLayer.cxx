@@ -52,14 +52,17 @@ OutType IPyraNet2DLayer<OutType>::getWeightedSumInput(int dimensions, int* neuro
     // compute the gap
     const int gap = receptiveSize - overlap;
 
-    // just for compliance with the article
-    const int u = neuronLocation[0];
-    const int v = neuronLocation[1];
+    // just for compliance with the article (which uses 1..n indices)
+    const int u = neuronLocation[0] + 1;
+    const int v = neuronLocation[1] + 1;
 
     OutType receptiveAccumulator = 0;
-    OutType bias = biases[u][v];
+    OutType bias = biases[neuronLocation[0]][neuronLocation[1]];
 
     int parentLoc[2];
+
+    int parentSize[2];
+    parent->getSize(parentSize);
 
     // iterate through the neurons inside the receptive field of the previous layer
     //
@@ -67,23 +70,36 @@ OutType IPyraNet2DLayer<OutType>::getWeightedSumInput(int dimensions, int* neuro
     // **uv**
     // ******
     //
-    const int min_u = u * gap + 1;
-    const int min_v = v * gap + 1;
-    const int max_u = u * gap + receptiveSize;
-    const int max_v = v * gap + receptiveSize;
+    const int min_u = (u - 1) * gap + 1;
+    const int max_u = (u - 1) * gap + receptiveSize;
+    const int min_v = (v - 1) * gap + 1;
+    const int max_v = (v - 1) * gap + receptiveSize;
 
-//    for (int i = (u - 1) * gap + 1; i <= max_u; ++i) {
-    for (int i = min_u; i < max_u; ++i) {
+    for (int i = min_u; i <= max_u; ++i) {
 
-        parentLoc[0] = i;
+        // indices on the paper (2) go from 1 to n. Our indices go from 0 to n-1
+        parentLoc[0] = i - 1;
         
-        //for (int j = (v - 1) * gap + 1; j <= max_v; ++j) {
-        for (int j = min_v; j < max_v; ++j) {
-            
-            parentLoc[1] = j;
+        // ignore neuron indices which fall outside of the layer
+        if (parentLoc[0] < 0)
+            continue;
 
+        if (parentLoc[0] > parentSize[0])
+            continue;
+        
+        for (int j = min_v; j <= max_v; ++j) {
+            
+            parentLoc[1] = j - 1;
+
+            // ignore neuron indices which fall outside of the layer
+            if (parentLoc[1] < 0)
+                continue;
+
+            if (parentLoc[1] > parentSize[1])
+                continue;
+            
             OutType parentOutput = parent->getNeuronOutput(2, parentLoc);
-            OutType weight = weights[i][j];
+            OutType weight = weights[parentLoc[0]][parentLoc[1]];
 
             receptiveAccumulator += parentOutput * weight;
         }
@@ -98,41 +114,44 @@ OutType IPyraNet2DLayer<OutType>::getWeightedSumInput(int dimensions, int* neuro
     // xxxxxxxx
     //
     // the inhibitory field is 'x' and the receptive field is '*'
-
-    int parentSize[2];
-    parent->getSize(parentSize);
-
     OutType inhibitoryAccumulator = 0;
     const int inhibitory_min_u = min_u - inhibitorySize;
-    const int inhibitory_min_v = min_v - inhibitorySize;
     const int inhibitory_max_u = max_u + inhibitorySize;
+    const int inhibitory_min_v = min_v - inhibitorySize;
     const int inhibitory_max_v = max_v + inhibitorySize;
     
-    for (int i = inhibitory_min_u; i < inhibitory_max_u; ++i) {
+    for (int i = inhibitory_min_u; i <= inhibitory_max_u; ++i) {
         
-        parentLoc[0] = i;
+        // indices on the paper (2) go from 1 to n. Our indices go from 0 to n-1
+        parentLoc[0] = i - 1;
+        
+        // ignore neuron indices which fall outside of the layer
+        if (parentLoc[0] < 0)
+            continue;
 
-        for (int j = inhibitory_min_v; j < inhibitory_max_v; ++j) {
+        if (parentLoc[0] > parentSize[0])
+            continue;
 
-            // ignore neurons of the inhibitory field which fall outside
-            // of the parent 2D area
-            if (i < 0 || j < 0)
+        for (int j = inhibitory_min_v; j <= inhibitory_max_v; ++j) {
+
+            parentLoc[1] = j - 1;
+
+            // ignore neuron indices which fall outside of the layer
+            if (parentLoc[1] < 0)
                 continue;
 
-            if (i > parentSize[0] || j > parentSize[1])
+            if (parentLoc[1] > parentSize[1])
                 continue;
 
             // ignore neurons in the receptive field!
-            if (i >= min_u && i < max_u)
+            if (i >= min_u && i <= max_u)
                 continue;
 
-            if (j >= min_v && j < max_v)
+            if (j >= min_v && j <= max_v)
                 continue;
-
-            parentLoc[1] = j;
 
             OutType parentOutput = parent->getNeuronOutput(2, parentLoc);
-            OutType weight = weights[i][j];
+            OutType weight = weights[parentLoc[0]][parentLoc[1]];
 
             inhibitoryAccumulator += parentOutput * weight;
         }
