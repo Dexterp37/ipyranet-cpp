@@ -14,8 +14,17 @@ IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer()
 }
 
 template<class OutType>
-IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer(const std::string& fileName) {
+IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer(const std::string& fileName)  
+    : IPyraNetLayer<OutType>()
+{
     load(fileName);
+}
+
+template<class OutType>
+IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer(int initialWidth, int initialHeight)  
+    : IPyraNetLayer<OutType>()
+{
+    source.create(initialHeight, initialWidth, CV_8U);
 }
 
 template<class OutType>
