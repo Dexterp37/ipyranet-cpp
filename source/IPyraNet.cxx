@@ -367,7 +367,7 @@ void IPyraNet<NetType>::test(const std::string& path) {
     std::cout << "Correctly classified faces:\t" << percCorrectFaces << "%" << std::endl;
     std::cout << "Correctly classified non faces:\t" << percCorrectNonFaces << "%" << std::endl;
     std::cout << "Averge:\t" << ((percCorrectFaces + percCorrectNonFaces) * 0.5) << "%" << std::endl;
-    std::cout << std::endl << "Cross Entropy Error:" << errorCE << std::endl;
+    std::cout << std::endl << "Cross Entropy Error:\t" << errorCE << std::endl;
 }
 
 template <class NetType>
