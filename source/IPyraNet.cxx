@@ -200,12 +200,8 @@ void IPyraNet<NetType>::train(const std::string& path) {
             std::vector<NetType> errorSignal(outputs.size());
             computeErrorSignal(outputs, sample.desired, errorSignal);
 
-            // compute the error function (10)
-            for (size_t n = 0; n < outputs.size(); ++n) {
-                // fugly but works, errorSignal = pn - d so p = errorSignal + d
-                NetType pn = errorSignal[n] + sample.desired[n];
-                errorCE += sample.desired[n] * log(pn);
-            }
+            // compute the error function (10) and accumulate it for each image
+            errorCE += computeCrossEntropyError(outputs, sample.desired);
 
             // run the backpropagation algorithm
             backpropagation(errorSignal);
@@ -322,8 +318,8 @@ void IPyraNet<NetType>::test(const std::string& path) {
 
     size_t numSamples = samples.size();
     int faceConfusionMatrix[2][2] = {0, 0, 0, 0};
+    NetType errorCE = 0.0;
 
-    // now train the neural network for multiple epochs
     IPyraNet2DSourceLayer<NetType>* sourceLayer = ((IPyraNet2DSourceLayer<NetType>*)layers[0]);
 
     // test
@@ -342,6 +338,9 @@ void IPyraNet<NetType>::test(const std::string& path) {
         std::vector<NetType> outputs;
         getOutput(outputs);
 
+        // compute the error function (10) and accumulate it for each image
+        errorCE += computeCrossEntropyError(outputs, sample.desired);
+
         bool classifiedAsFace = outputs[0] > outputs[1];
         bool desiredFace = sample.desired[0] > sample.desired[1]; 
         bool correctlyClassified = (classifiedAsFace && desiredFace) || (!classifiedAsFace && !desiredFace);
@@ -351,6 +350,9 @@ void IPyraNet<NetType>::test(const std::string& path) {
         int outputIndex = classifiedAsFace ? 0 : 1;
         faceConfusionMatrix[inputIndex][outputIndex] += 1;
     }
+
+    // requires the minus sign
+    errorCE = -errorCE;
 
     // print the stats
     std::cout << "Train database has " << faces << " faces and " << nonFaces << " non faces" << std::endl;
@@ -365,6 +367,7 @@ void IPyraNet<NetType>::test(const std::string& path) {
     std::cout << "Correctly classified faces:\t" << percCorrectFaces << "%" << std::endl;
     std::cout << "Correctly classified non faces:\t" << percCorrectNonFaces << "%" << std::endl;
     std::cout << "Averge:\t" << ((percCorrectFaces + percCorrectNonFaces) * 0.5) << "%" << std::endl;
+    std::cout << std::endl << "Cross Entropy Error:" << errorCE << std::endl;
 }
 
 template <class NetType>
@@ -954,6 +957,24 @@ void IPyraNet<NetType>::computeErrorSignal(const std::vector<NetType>& output, c
     // finally compute the error signal
     for (size_t e = 0; e < output.size(); ++e)
         error[e] = (exp(output[e]) / expSum) - desired[e];
+}
+
+template <class NetType>
+NetType IPyraNet<NetType>::computeCrossEntropyError(const std::vector<NetType>& output, const NetType* desired) {
+
+    // compute the quote to estimate each pn
+    NetType expSum = 0.0;
+    for (size_t i = 0; i < output.size(); ++i)
+        expSum += exp(output[i]);
+
+    // now compute each pn and finally the error
+    NetType errorCE = 0.0;
+    for (size_t i = 0; i < output.size(); ++i) {
+        NetType pn = exp(output[i]) / expSum;
+        errorCE += desired[i] * log(pn);
+    }
+
+    return errorCE;
 }
 
 template <class NetType>

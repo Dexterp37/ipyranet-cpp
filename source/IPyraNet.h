@@ -76,6 +76,7 @@ private:
     void computeGradient();
     void resetGradient();
     void computeErrorSignal(const std::vector<NetType>& output, const NetType* desired, std::vector<NetType>& error);
+    NetType computeCrossEntropyError(const std::vector<NetType>& output, const NetType* desired);
     void updateWeightsAndBiases();
 };
 
