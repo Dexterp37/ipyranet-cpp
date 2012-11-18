@@ -359,9 +359,12 @@ void IPyraNet<NetType>::test(const std::string& path) {
     std::cout << "F\t" << faceConfusionMatrix[0][0] << "\t\t" << faceConfusionMatrix[1][0] << std::endl;
     std::cout << "NF\t" << faceConfusionMatrix[0][1] << "\t\t" << faceConfusionMatrix[1][1] << std::endl;
 
+    double percCorrectFaces = (faceConfusionMatrix[0][0] / (double)faces);
+    double percCorrectNonFaces = (faceConfusionMatrix[1][1] / (double)nonFaces);
     std::cout << std::endl << "Classification stats" << std::endl;
-    std::cout << "Correctly classified faces:\t" << (faceConfusionMatrix[0][0] / (double)faces) << "%" << std::endl;
-    std::cout << "Correctly classified non faces:\t" << (faceConfusionMatrix[1][1] / (double)nonFaces) << "%" << std::endl;
+    std::cout << "Correctly classified faces:\t" << percCorrectFaces << "%" << std::endl;
+    std::cout << "Correctly classified non faces:\t" << percCorrectNonFaces << "%" << std::endl;
+    std::cout << "Averge:\t" << ((percCorrectFaces + percCorrectNonFaces) * 0.5) << "%" << std::endl;
 }
 
 template <class NetType>
