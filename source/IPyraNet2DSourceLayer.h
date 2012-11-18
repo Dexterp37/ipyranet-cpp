@@ -33,8 +33,15 @@ public:
     void saveToXML(pugi::xml_node& node);
     void loadFromXML(pugi::xml_node& node);
 
+    void setPreprocessingEnabled(bool b);
+    bool getPreprocessingEnabled() const;
+
 private:
     cv::Mat source;
+    bool preprocessingEnabled;
+    static cv::Mat gaborKernel;
+
+    void preprocessImage(const cv::Mat& source, cv::Mat& dest);
 };
 
 #endif // _IPyraNet2DSourceLayer_h_

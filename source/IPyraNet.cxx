@@ -720,9 +720,9 @@ void IPyraNet<NetType>::computeErrorSensitivities(const std::vector<NetType>& er
                 NetType summation = 0;
 
                 // compute bounds as in (19) and (20)
-                iLow = ceil((u - receptive) / gap) + 1;
+                iLow = ceil((u - receptive) / gap);// + 1; (maybe the +1 offset is wrong here?)
                 iHigh = floor((u - 1) / gap) + 1;
-                jLow = ceil((v - receptive) / gap) + 1;
+                jLow = ceil((v - receptive) / gap);// + 1;
                 jHigh = floor((v - 1) / gap) + 1;
 
                 int ijMinusOne[2];
@@ -876,10 +876,10 @@ void IPyraNet<NetType>::computeGradient() {
                 
                 NetType parentNeuronOutput = parent->getNeuronOutput(2, parentNeuronLoc);
                 
-                // compute uLow-uHigh and vLow-vHigh
-                uLow = ceil((i - receptive) / gap) + 1;
+                // compute uLow-uHigh and vLow-vHigh (23)
+                uLow = ceil((i - receptive) / gap);// + 1; // maybe the +1 is wrong?
                 uHigh = floor((i - 1) / gap) + 1;
-                vLow = ceil((j - receptive) / gap) + 1;
+                vLow = ceil((j - receptive) / gap);// + 1;
                 vHigh = floor((j - 1) / gap) + 1;
                 
                 NetType summation = 0;

@@ -4,25 +4,29 @@
 
 #include "IPyraNet2DSourceLayer.h"
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <assert.h>
 
 template<class OutType>
 IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer() 
-    : IPyraNetLayer<OutType>()
+    : IPyraNetLayer<OutType>(),
+    preprocessingEnabled(true)
 {
 
 }
 
 template<class OutType>
 IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer(const std::string& fileName)  
-    : IPyraNetLayer<OutType>()
+    : IPyraNetLayer<OutType>(),
+    preprocessingEnabled(true)
 {
     load(fileName);
 }
 
 template<class OutType>
 IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer(int initialWidth, int initialHeight)  
-    : IPyraNetLayer<OutType>()
+    : IPyraNetLayer<OutType>(),
+    preprocessingEnabled(true)
 {
     source.create(initialHeight, initialWidth, CV_8U);
 }
@@ -36,6 +40,10 @@ template<class OutType>
 bool IPyraNet2DSourceLayer<OutType>::load(const std::string& fileName) {
 
     cv::Mat original = cv::imread(fileName);
+
+    if (preprocessingEnabled)
+        preprocessImage(original, original);
+
     original.convertTo(source, CV_64F, 1.0 / 255.0);
 
     if (!source.data)
@@ -88,6 +96,35 @@ void IPyraNet2DSourceLayer<OutType>::loadFromXML(pugi::xml_node& node) {
     int initialHeight = node.attribute("height").as_int();
 
     source.create(initialHeight, initialWidth, CV_8U);
+}
+
+template<class OutType>
+void IPyraNet2DSourceLayer<OutType>::setPreprocessingEnabled(bool b) {
+    preprocessingEnabled = b;
+}
+
+template<class OutType>
+bool IPyraNet2DSourceLayer<OutType>::getPreprocessingEnabled() const {
+    return preprocessingEnabled;
+}
+
+template<class OutType>
+void IPyraNet2DSourceLayer<OutType>::preprocessImage(const cv::Mat& source, cv::Mat& dest) {
+    
+    // apply Histogram Equalization
+    cv::equalizeHist(source, dest);
+
+    // initialize the gabor filter (just once)
+    if (gaborKernel.cols == 0 || gaborKernel.rows == 0) {
+        // taken from I-Pyranet paper
+        double sigma = 4;
+        double theta = CV_PI/3;
+
+        gaborKernel = cv::getGaborKernel(cv::Size(15, 15) , sigma, theta, lambda, 1, CV_PI, CV_32F );
+    }
+
+    // apply the gabor filter
+    cv::filter2D(dest, dest, CV_8U/*CV_32F*/, gaborKernel);
 }
 
 // explicit instantiations
