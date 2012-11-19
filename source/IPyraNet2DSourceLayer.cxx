@@ -39,12 +39,12 @@ IPyraNet2DSourceLayer<OutType>::~IPyraNet2DSourceLayer() {
 template<class OutType>
 bool IPyraNet2DSourceLayer<OutType>::load(const std::string& fileName) {
 
-    cv::Mat original = cv::imread(fileName);
+    cv::Mat original = cv::imread(fileName, CV_LOAD_IMAGE_GRAYSCALE);
 
     if (preprocessingEnabled)
         preprocessImage(original, original);
-
-    original.convertTo(source, CV_64F, 1.0 / 255.0);
+    else
+        original.convertTo(source, CV_64F, 1.0 / 255.0);
 
     if (!source.data)
         return false;
@@ -117,16 +117,37 @@ void IPyraNet2DSourceLayer<OutType>::preprocessImage(const cv::Mat& source, cv::
     // initialize the gabor filter (just once)
     if (gaborKernel.cols == 0 || gaborKernel.rows == 0) {
         // taken from I-Pyranet paper
-        double sigma = 4;
-        double theta = CV_PI/3;
+        double sigma = 4; // gaussian standard deviation
+        double theta = CV_PI/3; // orientation, ~60°
+        double lambda = 1.0/8.0; // wavelength
+        double gamma = 1.0; // aspect ratio
+        int kernelSize = 15; // this was not in the paper
 
-        gaborKernel = cv::getGaborKernel(cv::Size(15, 15) , sigma, theta, lambda, 1, CV_PI, CV_32F );
+        gaborKernel = cv::getGaborKernel(cv::Size(kernelSize, kernelSize) , sigma, theta, lambda, gamma);
     }
-
+    /*
     // apply the gabor filter
-    cv::filter2D(dest, dest, CV_8U/*CV_32F*/, gaborKernel);
+    cv::Mat scaledTo1;
+    dest.convertTo(scaledTo1, CV_64F, 1.0 / 255.0);
+
+    cv::Mat gaboredData;
+    cv::filter2D(dest, gaboredData, CV_64F, gaborKernel);
+
+    cv::Mat temp = gaboredData;
+    //gaboredData.convertTo(temp, CV_8U, 255.0);
+    
+    cv::imwrite("gabored.png", temp);
+
+    cv::waitKey(15000);*/
+    cv::Mat filtered;
+    cv::filter2D(dest, filtered, CV_64F, gaborKernel);
+    dest = filtered;
+    //cv::imwrite("lasttest.bmp", dest);
 }
 
 // explicit instantiations
 template class IPyraNet2DSourceLayer<float>;
 template class IPyraNet2DSourceLayer<double>;
+
+cv::Mat IPyraNet2DSourceLayer<float>::gaborKernel;
+cv::Mat IPyraNet2DSourceLayer<double>::gaborKernel;

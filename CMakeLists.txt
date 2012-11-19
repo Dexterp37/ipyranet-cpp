@@ -4,7 +4,7 @@ project(IPyraNet)
 
 #set(Boost_USE_STATIC_LIBS ON)
 
-find_package(OpenCV COMPONENTS core highgui REQUIRED)
+find_package(OpenCV COMPONENTS core highgui imgproc REQUIRED)
 #find_package(Boost COMPONENTS system thread REQUIRED)
 
 include_directories(${OPENNI_INCLUDE_DIR})
