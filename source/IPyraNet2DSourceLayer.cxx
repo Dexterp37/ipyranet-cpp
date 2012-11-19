@@ -42,7 +42,7 @@ bool IPyraNet2DSourceLayer<OutType>::load(const std::string& fileName) {
     cv::Mat original = cv::imread(fileName, CV_LOAD_IMAGE_GRAYSCALE);
 
     if (preprocessingEnabled)
-        preprocessImage(original, original);
+        preprocessImage(original, source);
     else
         original.convertTo(source, CV_64F, 1.0 / 255.0);
 
@@ -119,7 +119,7 @@ void IPyraNet2DSourceLayer<OutType>::preprocessImage(const cv::Mat& source, cv::
         // taken from I-Pyranet paper
         double sigma = 4; // gaussian standard deviation
         double theta = CV_PI/3; // orientation, ~60°
-        double lambda = 1.0/8.0; // wavelength
+        double lambda = 1.0/8.0; // wavelength (central frequency f=8)
         double gamma = 1.0; // aspect ratio
         int kernelSize = 15; // this was not in the paper
 
@@ -142,7 +142,7 @@ void IPyraNet2DSourceLayer<OutType>::preprocessImage(const cv::Mat& source, cv::
     cv::Mat filtered;
     cv::filter2D(dest, filtered, CV_64F, gaborKernel);
     dest = filtered;
-    //cv::imwrite("lasttest.bmp", dest);
+    //cv::imwrite("facetest.bmp", dest);
 }
 
 // explicit instantiations
