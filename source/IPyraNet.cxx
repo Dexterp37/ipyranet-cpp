@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <iostream>
 #include "../3rdParties/dirent-1.12.1/dirent.h" // this is NOT cross platform!
+#include <opencv2/highgui/highgui.hpp>
 
 template <class NetType>
 IPyraNet<NetType>::IPyraNet() 
@@ -94,9 +95,12 @@ void IPyraNet<NetType>::train(const std::string& path) {
     struct Sample {
         std::string filePath;
         NetType desired[2];
+        cv::Mat image;
+        bool preprocessed;
     };
 
-    std::vector<Sample> samples;
+    // load all samples in the heap, just once.
+    std::vector<Sample>* samples = new std::vector<Sample>();
 
     std::string facePath(path);
     facePath.append("/face");
@@ -110,8 +114,10 @@ void IPyraNet<NetType>::train(const std::string& path) {
     std::cout << "Populating samples database...";
 
     DIR* faceDir = opendir (facePath.c_str());
-    if (faceDir == NULL) 
+    if (faceDir == NULL) {
+        delete samples;
         return;
+    }
 
     while ((ent = readdir (faceDir)) != NULL) {
 
@@ -127,16 +133,22 @@ void IPyraNet<NetType>::train(const std::string& path) {
         sample.filePath.append("/");
         sample.filePath.append(ent->d_name);
 
+        // this should not be here, I know, but we need it to make the
+        sample.image = cv::imread(sample.filePath, CV_LOAD_IMAGE_GRAYSCALE);
+        sample.preprocessed = false;
+
         // push into the array
-        samples.push_back(sample);
+        samples->push_back(sample);
     }
 
     closedir (faceDir);    
     
     // fill the array with the "NON faces"
     DIR* nonFaceDir = opendir (nonFacePath.c_str());
-    if (nonFaceDir == NULL) 
+    if (nonFaceDir == NULL) {
+        delete samples;
         return;
+    }
 
     while ((ent = readdir (nonFaceDir)) != NULL) {
 
@@ -152,8 +164,12 @@ void IPyraNet<NetType>::train(const std::string& path) {
         sample.filePath.append("/");
         sample.filePath.append(ent->d_name);
 
+        // this should not be here, I know, but we need it to make the
+        sample.image = cv::imread(sample.filePath, CV_LOAD_IMAGE_GRAYSCALE);
+        sample.preprocessed = false;
+
         // push into the array
-        samples.push_back(sample);
+        samples->push_back(sample);
     }
 
     closedir (nonFaceDir);
@@ -164,7 +180,7 @@ void IPyraNet<NetType>::train(const std::string& path) {
     initDeltaStorage();
     initGradientStorage();
 
-    size_t numSamples = samples.size();
+    size_t numSamples = samples->size();
 
     // now train the neural network for multiple epochs
     IPyraNet2DSourceLayer<NetType>* sourceLayer = ((IPyraNet2DSourceLayer<NetType>*)layers[0]);
@@ -177,20 +193,22 @@ void IPyraNet<NetType>::train(const std::string& path) {
 
         // shuffle samples
         std::cout << "Shuffling samples...";
-        std::random_shuffle(samples.begin(), samples.end());
+        std::random_shuffle(samples->begin(), samples->end());
         std::cout << "\tDONE" << std::endl;
 
         // train
         for (size_t index = 0; index < numSamples; ++index) {
 
-            // get the sample
-            Sample sample = samples[index];
+            // if we didn't preprocess the image, do it now
+            sourceLayer->setPreprocessingEnabled(samples->at(index).preprocessed == false);
 
             // process this image and compute the output
-            if (!sourceLayer->load(sample.filePath.c_str())) {
+            if (!sourceLayer->load(samples->at(index).image)) {
                 std::cout << "ERROR!" << std::endl;
                 continue;
             }
+
+            samples->at(index).preprocessed = true;
 
             // compute network output
             std::vector<NetType> outputs;
@@ -198,10 +216,10 @@ void IPyraNet<NetType>::train(const std::string& path) {
 
             // compute the error signal
             std::vector<NetType> errorSignal(outputs.size());
-            computeErrorSignal(outputs, sample.desired, errorSignal);
+            computeErrorSignal(outputs, samples->at(index).desired, errorSignal);
 
             // compute the error function (10) and accumulate it for each image
-            errorCE += computeCrossEntropyError(outputs, sample.desired);
+            errorCE += computeCrossEntropyError(outputs, samples->at(index).desired);
 
             // run the backpropagation algorithm
             backpropagation(errorSignal);
@@ -213,7 +231,7 @@ void IPyraNet<NetType>::train(const std::string& path) {
             }
 
             if (verboseOutput) {
-                std::cout << " D [" << sample.desired[0] << " | " << sample.desired[1] << "]";
+                std::cout << " D [" << samples->at(index).desired[0] << " | " << samples->at(index).desired[1] << "]";
                 std::cout << " OUT [" << outputs[0] << " | " << outputs[1] << "] ";
                 std::cout << " Err [" << errorSignal[0] << " | " << errorSignal[1] << "]" << std::endl;
             }
@@ -231,9 +249,13 @@ void IPyraNet<NetType>::train(const std::string& path) {
         if (errorCE < wantedError) {
             // error is under our wanted threshold. Exit from the loop
             std::cout << "Training stopped. Error is " << errorCE << " and the wanted error is " << wantedError << std::endl;
+            delete samples;
             return;
         }
     }
+
+    // free samples memory
+    delete samples;
 }
 
 template <class NetType>
@@ -355,8 +377,8 @@ void IPyraNet<NetType>::test(const std::string& path) {
     errorCE = -errorCE;
 
     // print the stats
-    std::cout << "Train database has " << faces << " faces and " << nonFaces << " non faces" << std::endl;
-    std::cout << "Confusion matrix" << std::endl;
+    std::cout << "Test database has " << faces << " faces and " << nonFaces << " non faces" << std::endl;
+    std::cout << std::endl << "Confusion matrix" << std::endl;
     std::cout << "\tF\t\tNF" << std::endl;
     std::cout << "F\t" << faceConfusionMatrix[0][0] << "\t\t" << faceConfusionMatrix[1][0] << std::endl;
     std::cout << "NF\t" << faceConfusionMatrix[0][1] << "\t\t" << faceConfusionMatrix[1][1] << std::endl;

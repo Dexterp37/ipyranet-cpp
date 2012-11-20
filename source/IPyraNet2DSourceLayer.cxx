@@ -51,6 +51,20 @@ bool IPyraNet2DSourceLayer<OutType>::load(const std::string& fileName) {
 
     return true;
 }
+
+template<class OutType>
+bool IPyraNet2DSourceLayer<OutType>::load(cv::Mat& sourceImage) {
+
+    if (preprocessingEnabled)
+        preprocessImage(sourceImage, sourceImage);
+
+    source = sourceImage;
+
+    if (!source.data)
+        return false;
+
+    return true;
+}
    
 template<class OutType>
 OutType IPyraNet2DSourceLayer<OutType>::getNeuronOutput(int dimensions, int* neuronLocation) {

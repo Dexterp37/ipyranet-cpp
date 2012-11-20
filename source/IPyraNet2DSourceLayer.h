@@ -20,6 +20,7 @@ public:
     LayerType getLayerType() const { return Source; }
 
     bool load(const std::string& fileName);
+    bool load(cv::Mat& sourceImage);
     
     OutType getErrorSensitivity(int dimensions, int* neuronLocation, OutType multiplier) { return 0; };
     OutType getNeuronOutput(int dimensions, int* neuronLocation);    
