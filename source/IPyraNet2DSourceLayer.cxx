@@ -139,24 +139,15 @@ void IPyraNet2DSourceLayer<OutType>::preprocessImage(const cv::Mat& source, cv::
 
         gaborKernel = cv::getGaborKernel(cv::Size(kernelSize, kernelSize) , sigma, theta, lambda, gamma);
     }
-    /*
-    // apply the gabor filter
-    cv::Mat scaledTo1;
-    dest.convertTo(scaledTo1, CV_64F, 1.0 / 255.0);
-
-    cv::Mat gaboredData;
-    cv::filter2D(dest, gaboredData, CV_64F, gaborKernel);
-
-    cv::Mat temp = gaboredData;
-    //gaboredData.convertTo(temp, CV_8U, 255.0);
     
-    cv::imwrite("gabored.png", temp);
+    // convert the image from 0-255 to [-1.0 +1.0] and apply the gabor filter
+    cv::Mat scaledTo1;
+    dest.convertTo(scaledTo1, CV_64F, 2.0 / 255.0, -1.0); // (maxVal - minVal) / 255.0, minVal);
 
-    cv::waitKey(15000);*/
-    cv::Mat filtered;
-    cv::filter2D(dest, filtered, CV_64F, gaborKernel);
-    dest = filtered;
-    //cv::imwrite("facetest.bmp", dest);
+    dest = scaledTo1;
+    /*
+    cv::Mat gaboredData;
+    cv::filter2D(scaledTo1, dest, CV_64F, gaborKernel);*/
 }
 
 // explicit instantiations

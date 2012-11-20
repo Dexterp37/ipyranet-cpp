@@ -977,8 +977,10 @@ void IPyraNet<NetType>::computeErrorSignal(const std::vector<NetType>& output, c
         expSum += exp(output[i]);
 
     // finally compute the error signal
-    for (size_t e = 0; e < output.size(); ++e)
-        error[e] = (exp(output[e]) / expSum) - desired[e];
+    for (size_t e = 0; e < output.size(); ++e) {
+        NetType pn = exp(output[e]) / expSum;
+        error[e] = pn - desired[e];
+    }
 }
 
 template <class NetType>
