@@ -123,10 +123,10 @@ bool IPyraNet2DSourceLayer<OutType>::getPreprocessingEnabled() const {
 }
 
 template<class OutType>
-void IPyraNet2DSourceLayer<OutType>::preprocessImage(const cv::Mat& source, cv::Mat& dest) {
+void IPyraNet2DSourceLayer<OutType>::preprocessImage(const cv::Mat& src, cv::Mat& dest) {
     
     // apply Histogram Equalization
-    cv::equalizeHist(source, dest);
+    cv::equalizeHist(src, dest);
 
     // initialize the gabor filter (just once)
     if (gaborKernel.cols == 0 || gaborKernel.rows == 0) {
