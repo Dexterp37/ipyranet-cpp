@@ -76,8 +76,9 @@ bool IPyraNet<NetType>::saveOutputToXML(const std::string& fileName) {
         node.append_attribute("type").set_value(layer->getLayerType());
         node.append_attribute("dims").set_value(dims);
 
-        for (size_t u = 0; u < layerSize[0]; ++u) {
-            for (size_t v = 0; v < layerSize[1]; ++v) {
+        // save, raster style (row by row)
+        for (size_t v = 0; v < layerSize[1]; ++v) {
+            for (size_t u = 0; u < layerSize[0]; ++u) {
                 int neuronLoc[2] = {u, v};
                 NetType output = layer->getNeuronOutput(dims, neuronLoc);
 
