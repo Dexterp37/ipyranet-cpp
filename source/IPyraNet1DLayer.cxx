@@ -157,7 +157,8 @@ OutType IPyraNet1DLayer<OutType>::getWeightedSumInput(int dimensions, int* neuro
                 parentNeuronLoc[1] = m_v;
                 OutType parentNeuronOutput = parent->getNeuronOutput(2, parentNeuronLoc);
 
-                parentNeuronIndex = (m_v * parentSize[1]) + m_u;
+                //parentNeuronIndex = (m_v * parentSize[1]) + m_u;  // TODO: Check? 
+                parentNeuronIndex = (m_v * parentSize[0]) + m_u;
                 OutType connectionWeight = weights[parentNeuronIndex][n];
 
                 accumulator += parentNeuronOutput * connectionWeight;

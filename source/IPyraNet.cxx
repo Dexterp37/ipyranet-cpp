@@ -739,7 +739,7 @@ void IPyraNet<NetType>::computeErrorSensitivities(const std::vector<NetType>& er
                     NetType summation = 0;
 
                     //parentNeuronIndex = (m_v * parentSize[1]) + m_u;
-                    int n = (v * outputSize[1]) + u;//u * outputSize[0] + v;  // TODO: check? (17)
+                    int n = (v * outputSize[0]) + u;//u * outputSize[0] + v;  // TODO: check? (17)
                     int weightLocation[2] = {n, 0};
 
                     for (int m = 0; m < lastLayerNeurons; ++m) {
@@ -872,7 +872,7 @@ void IPyraNet<NetType>::computeGradient() {
 
                     NetType parentNeuronOutput = parent->getNeuronOutput(2, parentNeuronLoc);
 
-                    m = (m_v * parentSize[1]) + m_u;
+                    m = (m_v * parentSize[0]) + m_u;
 
                     // update the gradient
                     for (int n = 0; n < neurons; ++n)
