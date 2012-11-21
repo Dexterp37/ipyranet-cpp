@@ -8,6 +8,9 @@
 #include "IPyraNetActivationFunction.h"
 #include "../3rdParties/pugixml-1.2/src/pugixml.hpp"
 
+//#define UNIFORM_PLUS_MINUS_ONE ( static_cast<OutType>((2.0 * rand())/RAND_MAX - 1.0) )
+#define UNIFORM_PLUS_MINUS_ONE ( static_cast<OutType>(((4.0)*((float)rand()/RAND_MAX))-2.0) )
+
 template<typename OutType>
 class IPyraNetLayer {
 public:

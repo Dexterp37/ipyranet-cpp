@@ -5,8 +5,6 @@
 #include "IPyraNet1DLayer.h"
 #include <assert.h>
 
-#define UNIFORM_PLUS_MINUS_ONE ( static_cast<OutType>((2.0 * rand())/RAND_MAX - 1.0) )
-
 template<class OutType>
 IPyraNet1DLayer<OutType>::IPyraNet1DLayer() 
     : IPyraNetLayer<OutType>(),
