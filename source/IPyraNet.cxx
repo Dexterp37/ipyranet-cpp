@@ -57,6 +57,42 @@ bool IPyraNet<NetType>::saveToXML(const std::string& fileName) {
 }
     
 template <class NetType>
+bool IPyraNet<NetType>::saveOutputToXML(const std::string& fileName) {
+    
+    pugi::xml_document doc;
+
+    // dump some useful info, just for reference
+    size_t num = layers.size();
+    int layerSize[2];
+    int dims = 0;
+
+    for (size_t k = 0; k < num; ++k) {
+
+        IPyraNetLayer<NetType>* layer = layers[k];
+        layer->getSize(layerSize);
+        dims = layer->getDimensions();
+        
+        pugi::xml_node node = doc.append_child("layer");
+        node.append_attribute("type").set_value(layer->getLayerType());
+        node.append_attribute("dims").set_value(dims);
+
+        for (size_t u = 0; u < layerSize[0]; ++u) {
+            for (size_t v = 0; v < layerSize[1]; ++v) {
+                int neuronLoc[2] = {u, v};
+                NetType output = layer->getNeuronOutput(dims, neuronLoc);
+
+                pugi::xml_node nodeOut = node.append_child("output");
+                nodeOut.append_attribute("u").set_value(u);
+                nodeOut.append_attribute("v").set_value(v);
+                nodeOut.append_attribute("out").set_value(output);
+            }
+        }
+    }
+
+    return doc.save_file(fileName.c_str());
+}
+    
+template <class NetType>
 bool IPyraNet<NetType>::loadFromXML(const std::string& fileName) {
 
     // erase all data, if any

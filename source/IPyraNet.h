@@ -24,6 +24,7 @@ public:
     // XML serialization
     bool saveToXML(const std::string& fileName);
     bool loadFromXML(const std::string& fileName);
+    bool saveOutputToXML(const std::string& fileName);
 
     // layer management
     void appendLayer(IPyraNetLayer<NetType>* newLayer);
