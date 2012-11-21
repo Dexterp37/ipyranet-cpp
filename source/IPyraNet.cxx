@@ -35,6 +35,12 @@ bool IPyraNet<NetType>::saveToXML(const std::string& fileName) {
         
     pugi::xml_document doc;
 
+    // dump some useful info, just for reference
+
+    pugi::xml_node infoNode = doc.append_child("trainInfo");
+    infoNode.append_attribute("learningRate").set_value(getLearningRate());
+    infoNode.append_attribute("epochs").set_value(getTrainingEpochs());
+
     size_t num = layers.size();
 
     for (size_t k = 0; k < num; ++k) {
