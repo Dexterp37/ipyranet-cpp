@@ -43,8 +43,8 @@ bool IPyraNet2DSourceLayer<OutType>::load(const std::string& fileName) {
 
     if (preprocessingEnabled)
         preprocessImage(original, source);
-    else
-        original.convertTo(source, CV_64F, 1.0 / 255.0);
+    else 
+        original.convertTo(source, CV_64F, 2.0 / 255.0, -1.0); // just convert to the -1 +1 range
 
     if (!source.data)
         return false;

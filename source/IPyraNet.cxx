@@ -386,6 +386,9 @@ void IPyraNet<NetType>::test(const std::string& path) {
     NetType errorCE = 0.0;
 
     IPyraNet2DSourceLayer<NetType>* sourceLayer = ((IPyraNet2DSourceLayer<NetType>*)layers[0]);
+    
+    // be sure to perform preprocessing each time we load a new sample
+    sourceLayer->setPreprocessingEnabled(true);
 
     // test
     for (size_t index = 0; index < numSamples; ++index) {
