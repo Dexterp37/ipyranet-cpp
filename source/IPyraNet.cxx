@@ -431,10 +431,12 @@ void IPyraNet<NetType>::test(const std::string& path) {
 
     double percCorrectFaces = (faceConfusionMatrix[0][0] / (double)faces);
     double percCorrectNonFaces = (faceConfusionMatrix[1][1] / (double)nonFaces);
+    double falsePositives = (faceConfusionMatrix[1][0] / (double)nonFaces);
     std::cout << std::endl << "Classification stats" << std::endl;
-    std::cout << "Correctly classified faces:\t" << percCorrectFaces << "%" << std::endl;
-    std::cout << "Correctly classified non faces:\t" << percCorrectNonFaces << "%" << std::endl;
-    std::cout << "Averge:\t" << ((percCorrectFaces + percCorrectNonFaces) * 0.5) << "%" << std::endl;
+    std::cout << "Correctly classified faces (True Positive Rate):\t" << percCorrectFaces << std::endl;
+    std::cout << "Wrongly classified non faces (False Positive Rate):\t" << falsePositives << std::endl;
+    std::cout << "Correctly classified non faces:\t" << percCorrectNonFaces << std::endl;
+    std::cout << "Averge:\t" << ((percCorrectFaces + percCorrectNonFaces) * 0.5) << std::endl;
     std::cout << std::endl << "Cross Entropy Error:\t" << errorCE << std::endl;
 }
 
@@ -772,10 +774,12 @@ void IPyraNet<NetType>::computeErrorSensitivities(const std::vector<NetType>& er
 
         int receptive = nextLayer2D->getReceptiveFieldSize();
         int overlap = nextLayer2D->getOverlap();
+        int inhibitory = nextLayer2D->getInhibitoryFieldSize();
         NetType gap = receptive - overlap;
 
         // iLow, iHight, jLow, jHigh
         int iLow = 0, iHigh = 0, jLow = 0, jHigh = 0;
+        int iLowMax = 0, iHighMax = 0, jLowMax = 0, jHighMax = 0;
 
         // indices in (18) go from 1 to n
         for (int u = 1; u <= outputSize[0]; ++u) {
@@ -787,6 +791,11 @@ void IPyraNet<NetType>::computeErrorSensitivities(const std::vector<NetType>& er
                 // compute the inner summation of (18) in the paper
                 NetType summation = 0;
 
+                iLowMax = ceil((u - (receptive + inhibitory)) / (gap - inhibitory)); // +1; (wrong offset?)
+                iHighMax = floor((u - 1) / (gap - inhibitory)) + 1;
+                jLowMax = ceil((v - (receptive + inhibitory)) / (gap - inhibitory)); // + 1;
+                jHighMax = floor((v - 1) / (gap - inhibitory)) + 1;
+
                 // compute bounds as in (19) and (20)
                 iLow = ceil((u - receptive) / gap);// + 1; (maybe the +1 offset is wrong here?)
                 iHigh = floor((u - 1) / gap) + 1;
@@ -795,11 +804,11 @@ void IPyraNet<NetType>::computeErrorSensitivities(const std::vector<NetType>& er
 
                 int ijMinusOne[2];
 
-                for (int i = iLow; i <= iHigh; ++i) {
+                for (int i = iLowMax; i <= iHighMax; ++i) {
                     
                     ijMinusOne[0] = i - 1;
 
-                    for (int j = jLow; j <= jHigh; ++j) {
+                    for (int j = jLowMax; j <= jHighMax; ++j) {
                     
                         ijMinusOne[1] = j - 1;
 
@@ -812,7 +821,18 @@ void IPyraNet<NetType>::computeErrorSensitivities(const std::vector<NetType>& er
                             ijMinusOne[1] >= layersDeltas[currentLayer + 1].deltas[ijMinusOne[0]].size())
                             continue;
 
-                        summation += layersDeltas[currentLayer + 1].deltas[ijMinusOne[0]][ijMinusOne[1]];
+                        if (i >= iLow &&
+                            i <= iHigh &&
+                            j >= jLow &&
+                            j <= jHigh)
+                        {
+                            // inside the receptive field
+                            summation += layersDeltas[currentLayer + 1].deltas[ijMinusOne[0]][ijMinusOne[1]];
+                        } else
+                        {
+                            // inside the inhibitory
+                            summation -= layersDeltas[currentLayer + 1].deltas[ijMinusOne[0]][ijMinusOne[1]];
+                        }
                     }
                 }
 
@@ -901,10 +921,12 @@ void IPyraNet<NetType>::computeGradient() {
     // compute the error gradient for 2D layers
     int receptive = 0;
     int overlap = 0;
+    int inhibitory = 0;
     NetType gap = 0;
 
     // uLow, uHight, vLow, vHigh
     int uLow = 0, uHigh = 0, vLow = 0, vHigh = 0;
+    int uLowMax = 0, uHighMax = 0, vLowMax = 0, vHighMax = 0;
 
     for (currentLayer; currentLayer > 0; --currentLayer) {
 
@@ -931,6 +953,7 @@ void IPyraNet<NetType>::computeGradient() {
         // get layer informations
         receptive = layer2D->getReceptiveFieldSize();
         overlap = layer2D->getOverlap();
+        inhibitory = layer2D->getInhibitoryFieldSize();
         gap = receptive - overlap;
             
         int parentNeuronLoc[2]; 
@@ -943,7 +966,12 @@ void IPyraNet<NetType>::computeGradient() {
                 parentNeuronLoc[1] = j - 1;    
                 
                 NetType parentNeuronOutput = parent->getNeuronOutput(2, parentNeuronLoc);
-                
+
+                uLowMax = ceil((i - (receptive + inhibitory)) / (gap - inhibitory)); // +1; (wrong offset?)
+                uHighMax = floor((i - 1) / (gap - inhibitory)) + 1;
+                vLowMax = ceil((j - (receptive + inhibitory)) / (gap - inhibitory)); // + 1;
+                vHighMax = floor((j - 1) / (gap - inhibitory)) + 1;
+
                 // compute uLow-uHigh and vLow-vHigh (23)
                 uLow = ceil((i - receptive) / gap);// + 1; // maybe the +1 is wrong?
                 uHigh = floor((i - 1) / gap) + 1;
@@ -954,10 +982,10 @@ void IPyraNet<NetType>::computeGradient() {
                 
                 int uvMinusOne[2];
 
-                for (int u = uLow; u <= uHigh; ++u) {
+                for (int u = uLowMax; u <= uHighMax; ++u) {
                     uvMinusOne[0] = u - 1;
 
-                    for (int v = vLow; v <= vHigh; ++v) {
+                    for (int v = vLowMax; v <= vHighMax; ++v) {
                         uvMinusOne[1] = v - 1;
 
                         if (uvMinusOne[0] < 0 || uvMinusOne[1] < 0)
@@ -967,7 +995,18 @@ void IPyraNet<NetType>::computeGradient() {
                             uvMinusOne[1] >= layersDeltas[currentLayer].deltas[uvMinusOne[0]].size())
                             continue;
 
-                        summation += layersDeltas[currentLayer].deltas[uvMinusOne[0]][uvMinusOne[1]];
+                        if (u >= uLow &&
+                            u <= uHigh &&
+                            v >= vLow &&
+                            v <= vHigh)
+                        {
+                            // inside the receptive field
+                            summation += layersDeltas[currentLayer].deltas[uvMinusOne[0]][uvMinusOne[1]];
+                        } else
+                        {
+                            // inside the inhibitory field
+                            summation -= layersDeltas[currentLayer].deltas[uvMinusOne[0]][uvMinusOne[1]];
+                        }
                     }
                 }
 
