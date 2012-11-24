@@ -82,7 +82,7 @@ OutType IPyraNet2DLayer<OutType>::getWeightedSumInput(int dimensions, int* neuro
         if (parentLoc[0] < 0)
             continue;
 
-        if (parentLoc[0] > parentSize[0])
+        if (parentLoc[0] >= parentSize[0])
             continue;
         
         for (int j = min_v; j <= max_v; ++j) {
@@ -93,7 +93,7 @@ OutType IPyraNet2DLayer<OutType>::getWeightedSumInput(int dimensions, int* neuro
             if (parentLoc[1] < 0)
                 continue;
 
-            if (parentLoc[1] > parentSize[1])
+            if (parentLoc[1] >= parentSize[1])
                 continue;
             
             OutType parentOutput = parent->getNeuronOutput(2, parentLoc);
@@ -127,7 +127,7 @@ OutType IPyraNet2DLayer<OutType>::getWeightedSumInput(int dimensions, int* neuro
         if (parentLoc[0] < 0)
             continue;
 
-        if (parentLoc[0] > parentSize[0])
+        if (parentLoc[0] >= parentSize[0])
             continue;
 
         for (int j = inhibitory_min_v; j <= inhibitory_max_v; ++j) {
@@ -138,7 +138,7 @@ OutType IPyraNet2DLayer<OutType>::getWeightedSumInput(int dimensions, int* neuro
             if (parentLoc[1] < 0)
                 continue;
 
-            if (parentLoc[1] > parentSize[1])
+            if (parentLoc[1] >= parentSize[1])
                 continue;
 
             // ignore neurons in the receptive field!
