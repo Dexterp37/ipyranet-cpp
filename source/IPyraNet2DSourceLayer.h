@@ -37,9 +37,21 @@ public:
     void setPreprocessingEnabled(bool b);
     bool getPreprocessingEnabled() const;
 
+	void setGaborEnabled(bool b);
+	bool getGaborEnabled() const;
+
 private:
     cv::Mat source;
     bool preprocessingEnabled;
+	bool gaborEnabled;
+	
+	// gabor kernel settings
+	double gaborSigma;
+	double gaborTheta;
+	double gaborLambda;
+	double gaborGamma;
+	int gaborKernelSize;
+
     static cv::Mat gaborKernel;
 
     void preprocessImage(const cv::Mat& source, cv::Mat& dest);

@@ -10,7 +10,15 @@
 template<class OutType>
 IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer() 
     : IPyraNetLayer<OutType>(),
-    preprocessingEnabled(true)
+    preprocessingEnabled(true),
+	gaborEnabled(false),
+
+    // taken from I-Pyranet paper
+    gaborSigma(4.0),		// gaussian standard deviation
+    gaborTheta(CV_PI/3),	// orientation, ~60°
+    gaborLambda(1.0/8.0),	// wavelength (central frequency f=8)
+    gaborGamma(1.0),		// aspect ratio
+    gaborKernelSize(15)		// this was not in the paper
 {
 
 }
@@ -18,7 +26,15 @@ IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer()
 template<class OutType>
 IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer(const std::string& fileName)  
     : IPyraNetLayer<OutType>(),
-    preprocessingEnabled(true)
+    preprocessingEnabled(true),
+	gaborEnabled(false),
+
+    // taken from I-Pyranet paper
+    gaborSigma(4.0),		// gaussian standard deviation
+    gaborTheta(CV_PI/3),	// orientation, ~60°
+    gaborLambda(1.0/8.0),	// wavelength (central frequency f=8)
+    gaborGamma(1.0),		// aspect ratio
+    gaborKernelSize(15)		// this was not in the paper
 {
     load(fileName);
 }
@@ -26,7 +42,15 @@ IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer(const std::string& fileNam
 template<class OutType>
 IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer(int initialWidth, int initialHeight)  
     : IPyraNetLayer<OutType>(),
-    preprocessingEnabled(true)
+    preprocessingEnabled(true),
+	gaborEnabled(false),
+
+    // taken from I-Pyranet paper
+    gaborSigma(4.0),		// gaussian standard deviation
+    gaborTheta(CV_PI/3),	// orientation, ~60°
+    gaborLambda(1.0/8.0),	// wavelength (central frequency f=8)
+    gaborGamma(1.0),		// aspect ratio
+    gaborKernelSize(15)		// this was not in the paper
 {
     source.create(initialHeight, initialWidth, CV_8U);
 }
@@ -96,11 +120,17 @@ template<class OutType>
 void IPyraNet2DSourceLayer<OutType>::saveToXML(pugi::xml_node& node) {
 
     // save the size
-    pugi::xml_attribute widthAttr = node.append_attribute("width");
-    widthAttr.set_value(source.cols);
+    node.append_attribute("width").set_value(source.cols);
+    node.append_attribute("height").set_value(source.rows);
 
-    pugi::xml_attribute heightAttr = node.append_attribute("height");
-    heightAttr.set_value(source.rows);
+	node.append_attribute("preprocess").set_value(preprocessingEnabled);
+	node.append_attribute("gabor").set_value(gaborEnabled);
+
+	node.append_attribute("sigma").set_value(gaborSigma);
+	node.append_attribute("theta").set_value(gaborTheta);
+	node.append_attribute("lambda").set_value(gaborLambda);
+	node.append_attribute("gamma").set_value(gaborGamma);
+	node.append_attribute("ksize").set_value(gaborKernelSize);
 }
 
 template<class OutType>
@@ -110,6 +140,15 @@ void IPyraNet2DSourceLayer<OutType>::loadFromXML(pugi::xml_node& node) {
     int initialHeight = node.attribute("height").as_int();
 
     source.create(initialHeight, initialWidth, CV_8U);
+
+	preprocessingEnabled = node.attribute("preprocess").as_bool();
+	gaborEnabled = node.attribute("gabor").as_bool();
+
+	gaborSigma = node.attribute("sigma").as_double();
+	gaborTheta = node.attribute("theta").as_double();
+	gaborLambda = node.attribute("lambda").as_double();
+	gaborGamma = node.attribute("gamma").as_double();
+	gaborKernelSize = node.attribute("ksize").as_int();
 }
 
 template<class OutType>
@@ -123,6 +162,16 @@ bool IPyraNet2DSourceLayer<OutType>::getPreprocessingEnabled() const {
 }
 
 template<class OutType>
+void IPyraNet2DSourceLayer<OutType>::setGaborEnabled(bool b) {
+    gaborEnabled = b;
+}
+
+template<class OutType>
+bool IPyraNet2DSourceLayer<OutType>::getGaborEnabled() const {
+    return gaborEnabled;
+}
+
+template<class OutType>
 void IPyraNet2DSourceLayer<OutType>::preprocessImage(const cv::Mat& src, cv::Mat& dest) {
     
     // apply Histogram Equalization
@@ -130,24 +179,20 @@ void IPyraNet2DSourceLayer<OutType>::preprocessImage(const cv::Mat& src, cv::Mat
 
     // initialize the gabor filter (just once)
     if (gaborKernel.cols == 0 || gaborKernel.rows == 0) {
-        // taken from I-Pyranet paper
-        double sigma = 4; // gaussian standard deviation
-        double theta = CV_PI/3; // orientation, ~60°
-        double lambda = 1.0/8.0; // wavelength (central frequency f=8)
-        double gamma = 1.0; // aspect ratio
-        int kernelSize = 15; // this was not in the paper
-
-        gaborKernel = cv::getGaborKernel(cv::Size(kernelSize, kernelSize) , sigma, theta, lambda, gamma);
+        gaborKernel = cv::getGaborKernel(cv::Size(gaborKernelSize, gaborKernelSize) , gaborSigma, 
+			gaborTheta, gaborLambda, gaborGamma);
     }
     
     // convert the image from 0-255 to [-1.0 +1.0] and apply the gabor filter
     cv::Mat scaledTo1;
     dest.convertTo(scaledTo1, CV_64F, 2.0 / 255.0, -1.0); // (maxVal - minVal) / 255.0, minVal);
 
-    dest = scaledTo1;
-    /*
-    cv::Mat gaboredData;
-    cv::filter2D(scaledTo1, dest, CV_64F, gaborKernel);*/
+	if (gaborEnabled) {
+		cv::Mat gaboredData;
+		cv::filter2D(scaledTo1, dest, CV_64F, gaborKernel);
+	} else {
+		dest = scaledTo1;
+	}
 }
 
 // explicit instantiations

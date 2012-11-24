@@ -414,29 +414,33 @@ void IPyraNet<NetType>::test(const std::string& path) {
         bool correctlyClassified = (classifiedAsFace && desiredFace) || (!classifiedAsFace && !desiredFace);
 
         // save some stats
-        int inputIndex = desiredFace ? 0 : 1;
-        int outputIndex = classifiedAsFace ? 0 : 1;
-        faceConfusionMatrix[inputIndex][outputIndex] += 1;
+        int realClassIndex = desiredFace ? 0 : 1;
+        int predictedClassIndex = classifiedAsFace ? 0 : 1;
+        faceConfusionMatrix[realClassIndex][predictedClassIndex] += 1;
     }
 
     // requires the minus sign
     errorCE = -errorCE;
 
-    // print the stats
+    // print the stats. Rows of the confusion matrix are the REAL (desired) classes. Columns are the predicted 
+	// ones.
     std::cout << "Test database has " << faces << " faces and " << nonFaces << " non faces" << std::endl;
-    std::cout << std::endl << "Confusion matrix" << std::endl;
+    std::cout << std::endl << "\tConfusion matrix" << std::endl << std::endl;
     std::cout << "\tF\t\tNF" << std::endl;
-    std::cout << "F\t" << faceConfusionMatrix[0][0] << "\t\t" << faceConfusionMatrix[1][0] << std::endl;
-    std::cout << "NF\t" << faceConfusionMatrix[0][1] << "\t\t" << faceConfusionMatrix[1][1] << std::endl;
+    std::cout << "F\t" << faceConfusionMatrix[0][0] << "\t\t" << faceConfusionMatrix[0][1] << std::endl;
+    std::cout << "NF\t" << faceConfusionMatrix[1][0] << "\t\t" << faceConfusionMatrix[1][1] << std::endl;
 
-    double percCorrectFaces = (faceConfusionMatrix[0][0] / (double)faces);
-    double percCorrectNonFaces = (faceConfusionMatrix[1][1] / (double)nonFaces);
+    double correctFacesRate = (faceConfusionMatrix[0][0] / (double)faces);	// also, true positives.
+    double correctNonFacesRate = (faceConfusionMatrix[1][1] / (double)nonFaces);
     double falsePositives = (faceConfusionMatrix[1][0] / (double)nonFaces);
+	double accuracyFromConfusionMatrix = (faceConfusionMatrix[0][0] + faceConfusionMatrix[1][1]) / 
+		(double)(faceConfusionMatrix[0][0] + faceConfusionMatrix[0][1] + faceConfusionMatrix[1][0] + faceConfusionMatrix[1][1]);
+
     std::cout << std::endl << "Classification stats" << std::endl;
-    std::cout << "Correctly classified faces (True Positive Rate):\t" << percCorrectFaces << std::endl;
+    std::cout << "Correctly classified faces (True Positive Rate):\t" << correctFacesRate << std::endl;
     std::cout << "Wrongly classified non faces (False Positive Rate):\t" << falsePositives << std::endl;
-    std::cout << "Correctly classified non faces:\t" << percCorrectNonFaces << std::endl;
-    std::cout << "Averge:\t" << ((percCorrectFaces + percCorrectNonFaces) * 0.5) << std::endl;
+    std::cout << "Correctly classified non faces:\t" << correctNonFacesRate << std::endl;
+    std::cout << "Accuracy:\t" << accuracyFromConfusionMatrix << std::endl;
     std::cout << std::endl << "Cross Entropy Error:\t" << errorCE << std::endl;
 }
 
