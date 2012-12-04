@@ -230,7 +230,7 @@ template<class OutType>
 void IPyraNet1DLayer<OutType>::saveToXML(pugi::xml_node& node) {
 
     // save the size
-    pugi::xml_attribute attr = node.append_attribute("neurons");
+    pugi::xml_attribute attr = node.append_attribute("width");
     attr.set_value(neurons);
 
     // dump the weights
@@ -271,7 +271,7 @@ void IPyraNet1DLayer<OutType>::saveToXML(pugi::xml_node& node) {
 template<class OutType>
 void IPyraNet1DLayer<OutType>::loadFromXML(pugi::xml_node& node) {
 
-    neurons = node.attribute("neurons").as_int();
+    neurons = node.attribute("width").as_int();
 
     // reshape weights buffer and load weights
     size_t inputNeurons = node.child("weights").attribute("inputs").as_uint();
