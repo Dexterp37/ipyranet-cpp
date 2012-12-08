@@ -25,4 +25,4 @@ The provided example software makes use of the [MIT CBCL Face Database #1] (http
 
 Documentation and contacts
 --------
-The code is heavily commented so please have a look at the code for further insights on its inner workings. In case you need to contact me, please feel free to do so at a.placitelli _A_T_ a2p.it or through GitHub.
+The code is heavily commented so please have a look at the code for further insights on its inner workings. In case you need to contact me, please feel free to do so at a.placitelli AT a2p.it or through GitHub.
