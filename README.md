@@ -23,6 +23,18 @@ Dataset
 -------
 The provided example software makes use of the [MIT CBCL Face Database #1] (http://www.ai.mit.edu/projects/cbcl.old/) to train the neural network. The experiment tries to distinguish between human faces and non human faces.
 
+Report a bug
+------------
+If you believe you've found a bug, please report it using the [issue submission form](https://github.com/Dexterp37/ipyranet-cpp/issues). Be sure to include the relevant information so that the bug can be reproduced: the version of the software, compiler version and target architecture, a little example of code that reproduces the bug, etc.
+
 Documentation and contacts
---------
+--------------------------
 The code is heavily commented so please have a look at the code for further insights on its inner workings. In case you need to contact me, please feel free to do so at a.placitelli AT a2p.it or through GitHub.
+
+Acknowledgments
+---------------
+This software is based on pugixml library (http://pugixml.org).
+pugixml is Copyright (C) 2006-2012 Arseny Kapoulkine.
+
+This software is based on dirent library (http://www.softagalleria.net/dirent.php).
+dirent is Copyright (C) 2006-2012 Toni Ronkko
