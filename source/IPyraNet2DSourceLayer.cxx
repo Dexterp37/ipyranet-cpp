@@ -173,16 +173,16 @@ bool IPyraNet2DSourceLayer<OutType>::getGaborEnabled() const {
 
 template<class OutType>
 void IPyraNet2DSourceLayer<OutType>::preprocessImage(const cv::Mat& src, cv::Mat& dest) {
-    
-    // apply Histogram Equalization
-    cv::equalizeHist(src, dest);
-
+   
     // initialize the gabor filter (just once)
     if (gaborKernel.cols == 0 || gaborKernel.rows == 0) {
         gaborKernel = cv::getGaborKernel(cv::Size(gaborKernelSize, gaborKernelSize) , gaborSigma, 
 			gaborTheta, gaborLambda, gaborGamma);
     }
-    
+     
+    // apply Histogram Equalization
+    cv::equalizeHist(src, dest);
+
     // convert the image from 0-255 to [-1.0 +1.0] and apply the gabor filter
     cv::Mat scaledTo1;
     dest.convertTo(scaledTo1, CV_64F, 2.0 / 255.0, -1.0); // (maxVal - minVal) / 255.0, minVal);
