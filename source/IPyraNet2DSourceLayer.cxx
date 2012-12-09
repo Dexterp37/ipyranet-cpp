@@ -36,11 +36,11 @@ IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer()
 	gaborEnabled(false),
 
     // taken from I-Pyranet paper
-    gaborSigma(4.0),		// gaussian standard deviation
-    gaborTheta(CV_PI/3),	// orientation, ~60°
-    gaborLambda(1.0/8.0),	// wavelength (central frequency f=8)
-    gaborGamma(1.0),		// aspect ratio
-    gaborKernelSize(15)		// this was not in the paper
+    gaborSigma(4.0),        // gaussian standard deviation
+    gaborTheta(CV_PI/3),    // orientation, ~60°
+    gaborLambda(8.0),       // wavelength (central frequency f=8)
+    gaborGamma(1.0),        // aspect ratio
+    gaborKernelSize(11)	    // this was not in the paper
 {
 
 }
@@ -52,11 +52,11 @@ IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer(const std::string& fileNam
 	gaborEnabled(false),
 
     // taken from I-Pyranet paper
-    gaborSigma(4.0),		// gaussian standard deviation
-    gaborTheta(CV_PI/3),	// orientation, ~60°
-    gaborLambda(1.0/8.0),	// wavelength (central frequency f=8)
-    gaborGamma(1.0),		// aspect ratio
-    gaborKernelSize(15)		// this was not in the paper
+    gaborSigma(4.0),        // gaussian standard deviation
+    gaborTheta(CV_PI/3),    // orientation, ~60°
+    gaborLambda(8.0),       // wavelength (central frequency f=8)
+    gaborGamma(1.0),        // aspect ratio
+    gaborKernelSize(11)	    // this was not in the paper
 {
     load(fileName);
 }
@@ -68,11 +68,11 @@ IPyraNet2DSourceLayer<OutType>::IPyraNet2DSourceLayer(int initialWidth, int init
 	gaborEnabled(false),
 
     // taken from I-Pyranet paper
-    gaborSigma(4.0),		// gaussian standard deviation
-    gaborTheta(CV_PI/3),	// orientation, ~60°
-    gaborLambda(1.0/8.0),	// wavelength (central frequency f=8)
-    gaborGamma(1.0),		// aspect ratio
-    gaborKernelSize(15)		// this was not in the paper
+    gaborSigma(4.0),        // gaussian standard deviation
+    gaborTheta(CV_PI/3),    // orientation, ~60°
+    gaborLambda(8.0),       // wavelength (central frequency f=8)
+    gaborGamma(1.0),        // aspect ratio
+    gaborKernelSize(11)	    // this was not in the paper
 {
     source.create(initialHeight, initialWidth, CV_8U);
 }
@@ -121,7 +121,6 @@ OutType IPyraNet2DSourceLayer<OutType>::getNeuronOutput(int dimensions, int* neu
     assert (neuronLocation[0] >= 0 && neuronLocation[1] >= 0);
 
     return static_cast<OutType>(source.at<double>(neuronLocation[1], neuronLocation[0]));
-//    return static_cast<OutType>(source.at<unsigned char>(neuronLocation[1], neuronLocation[0]));
 }
 
 template<class OutType>
@@ -198,8 +197,14 @@ void IPyraNet2DSourceLayer<OutType>::preprocessImage(const cv::Mat& src, cv::Mat
    
     // initialize the gabor filter (just once)
     if (gaborKernel.cols == 0 || gaborKernel.rows == 0) {
-        gaborKernel = cv::getGaborKernel(cv::Size(gaborKernelSize, gaborKernelSize) , gaborSigma, 
-			gaborTheta, gaborLambda, gaborGamma);
+        cv::Mat unflippedKernel = cv::getGaborKernel(cv::Size(gaborKernelSize, gaborKernelSize) , gaborSigma, 
+            gaborTheta, gaborLambda, gaborGamma, 0.0 /*psi*/);
+    
+        // flip the kernel both orizontally and vertically (as required by cv::flip2D)
+        cv::flip(unflippedKernel, gaborKernel, -1);
+
+        // the generated values are very small. Scale them.
+        //gaborKernel /= 2.0 * cv::sum(gaborKernel).val[0];
     }
      
     // apply Histogram Equalization
